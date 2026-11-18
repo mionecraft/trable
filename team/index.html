@@ -81,6 +81,21 @@ input[type=text]{flex:1;min-width:140px}
 .sheet button{flex:1;padding:11px;border-radius:10px;border:2px solid var(--navy);background:#fff;font-weight:800;font-size:14px;cursor:pointer}
 .sheet button.del{background:var(--red);border-color:var(--red);color:#fff}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;font-weight:700;display:none;z-index:60}
+.mhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}.mhead h2{margin:0;flex:1;text-align:center;font-size:18px}
+.nav{border:2px solid var(--navy);background:#fff;color:var(--navy);border-radius:10px;width:40px;height:34px;font-weight:900;cursor:pointer}
+.cal{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.cal .wh{text-align:center;font-size:12px;font-weight:800;color:var(--mut)}
+.cell{min-height:74px;border:2px solid var(--line);border-radius:10px;padding:3px;cursor:pointer;background:#fff;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.cell .n{font-size:13px;font-weight:900}
+.cell.past{opacity:.35;cursor:default}.cell.hol{background:#f4f4f6;cursor:default}.cell.hol .n{color:var(--red)}
+.cell.zero{background:var(--redbg);border-color:var(--red)}.cell.one{background:var(--yelbg);border-color:var(--yel)}
+.cell.sel{outline:3px solid var(--navy);outline-offset:-1px}.cell.today .n{background:var(--navy);color:#fff;border-radius:6px;padding:0 5px;align-self:flex-start}
+.cell.empty{border:0;background:transparent;cursor:default}
+.mini{font-size:10.5px;font-weight:800;color:#fff;border-radius:4px;padding:0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:15px}
+.cell .hn{font-size:10px;color:var(--red);font-weight:700}
+.legend{font-size:12px;color:var(--mut);margin:8px 2px 4px}.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin:0 3px 0 6px}
+.legend .lz{background:var(--red)}.legend .lo{background:var(--yel)}
+#days .day{border-top:0;margin-top:8px}
 @media(min-width:760px){.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.grid2 .card{margin-bottom:0}}
 </style>
 </head>
@@ -94,7 +109,10 @@ input[type=text]{flex:1;min-width:140px}
 </div>
 <div style="height:14px"></div>
 
-<section class="card"><h2>날짜별 일정</h2><div id="days"></div><button class="more" id="moreBtn">다음 2주 더 보기</button></section>
+<section class="card"><div class="mhead"><button class="nav" id="prevM">◀</button><h2 id="mTitle"></h2><button class="nav" id="nextM">▶</button></div>
+<div class="cal" id="cal"></div>
+<div class="legend">칸 색: <i class="lz"></i>전화 공백 <i class="lo"></i>1명뿐 · 이름 = 그날 자리 비우는 사람</div>
+<div id="days"></div></section>
 
 <section class="card" id="formCard"><h2>일정 넣기</h2>
 <div class="form">
@@ -166,7 +184,7 @@ function dayInfo(items,s){
 }
 
 // ===== 저장소 =====
-let DB={items:[]}, online=false, showWeeks=4;
+let DB={items:[]}, online=false;
 async function load(){
  try{
   const r=await fetch(API+"?t="+Date.now(),{cache:"no-store"});
@@ -258,20 +276,50 @@ function render(){
   });
  }
  $("alerts").innerHTML=al.length?al.map(x=>'<div class="al '+(x.g.inP.length?'one':'zero')+'" data-go="'+x.s+'"><span class="tag">'+(x.g.inP.length?'1명뿐':'공백')+'</span><b>'+md(x.s)+'</b> '+hm(x.g.a)+'~'+hm(x.g.b)+(x.g.inP.length?' · '+x.g.inP[0]+'만 있음':' · 아무도 없음')+'</div>').join(""):'<div class="none">앞으로 8주 동안 전화 공백 없음 👍</div>';
- // 날짜별 (오늘부터 — 지난 날은 안 보임)
- let st=parse(today);
- let h=""; for(let i=0;i<showWeeks*7;i++){const s=ymd(addD(st,i)); h+=dayHTML(s,s===today)}
- $("days").innerHTML=h;
+ // 월별 달력
+ renderCal(today);
  // 미정
  const und=DB.items.filter(it=>!it.from);
  $("undated").innerHTML=und.length?und.map(it=>'<li><b>'+it.who+'</b> '+it.kind+(it.memo?' — '+esc(it.memo):'')+'<button class="x" data-del="'+it.id+'">지우기</button></li>').join(""):'<li class="none">없음</li>';
+}
+
+// ===== 월별 달력 =====
+let calY=null, calM=null, selDay=null;
+const KS={"연가":"연가","반차":"반차","대체휴무":"대휴","특별휴가":"특휴","대휴·특휴":"대휴","공가":"공가","병가":"병가","교육":"교육","출장":"출장","육아시간":"육아","외출":"외출","기타":"기타"};
+const SHORT={"전선숙":"팀장","이은우":"은우","손가인":"가인","박지숙":"지숙"};
+function renderCal(today){
+ if(calY===null){const d=parse(today);calY=d.getFullYear();calM=d.getMonth();}
+ if(!selDay) selDay=isWork(today)?today:null;
+ $("mTitle").textContent=calY+"년 "+(calM+1)+"월";
+ let h="월화수목금".split("").map(w=>'<div class="wh">'+w+'</div>').join("");
+ const first=new Date(calY,calM,1), last=new Date(calY,calM+1,0);
+ let lead=(first.getDay()+6)%7; if(lead>4) lead=0;
+ const cells=[]; for(let i=0;i<lead;i++) cells.push({s:"",h:'<div class="cell empty"></div>'});
+ for(let d=1;d<=last.getDate();d++){
+  const dt=new Date(calY,calM,d), w=dt.getDay(); if(w===0||w===6) continue;
+  const s=ymd(dt);
+  if(HOL[s]){cells.push({s,h:'<div class="cell hol"><span class="n">'+d+'</span><span class="hn">'+HOL[s]+'</span></div>'});continue;}
+  if(s<today){cells.push({s,h:'<div class="cell past"><span class="n">'+d+'</span></div>'});continue;}
+  const info=dayInfo(DB.items,s);
+  const z=info.segs.some(g=>g.inP.length===0), o=info.segs.some(g=>g.inP.length===1);
+  let chips="";
+  PEOPLE.forEach(p=>{const a=info.away[p]; if(!a.length) return;
+   const full=a.some(x=>x.a===DS&&x.b===DE);
+   chips+='<span class="mini" style="background:'+(COLOR[a[0].it.kind]||"#495057")+'">'+SHORT[p]+' '+(KS[a[0].it.kind]||a[0].it.kind)+'</span>';});
+  cells.push({s,h:'<div class="cell'+(z?' zero':o?' one':'')+(s===today?' today':'')+(s===selDay?' sel':'')+'" data-day="'+s+'"><span class="n">'+d+'</span>'+chips+'</div>'});
+ }
+ // 다 지나간 주는 줄째로 뺌
+ for(let i=0;i<cells.length;i+=5){const wk=cells.slice(i,i+5); if(wk.some(c=>c.s&&c.s>=today)) h+=wk.map(c=>c.h).join("");}
+ $("cal").innerHTML=h;
+ $("days").innerHTML=selDay?dayHTML(selDay,selDay===today):'<div class="none" style="margin-top:8px">날짜를 누르면 그날 시간표가 여기 나옵니다</div>';
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 // ===== 막대 누르면 =====
 document.addEventListener("click",e=>{
  const b=e.target.closest(".blk"); if(b) return openItem(b.dataset.id,b.dataset.d);
- const g=e.target.closest("[data-go]"); if(g){const el=$("d"+g.dataset.go); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); else {showWeeks=10;render();setTimeout(()=>{const e2=$("d"+g.dataset.go);e2&&e2.scrollIntoView({behavior:"smooth",block:"center"})},50)} return;}
+ const c=e.target.closest("[data-day]"); if(c){selDay=c.dataset.day;render();return;}
+ const g=e.target.closest("[data-go]"); if(g){selDay=g.dataset.go;const d=parse(selDay);calY=d.getFullYear();calM=d.getMonth();render();$("cal").scrollIntoView({behavior:"smooth",block:"start"});return;}
  const x=e.target.closest("[data-del]"); if(x) return delItem(x.dataset.del);
  if(e.target.id==="pop") closePop();
 });
@@ -321,7 +369,8 @@ function init(){
  $("fFrom").value=ymd(new Date());
  paint("fWho","who"); paint("fMode","mode"); timeUI();
  $("saveBtn").onclick=save;
- $("moreBtn").onclick=()=>{showWeeks+=2;render()};
+ $("prevM").onclick=()=>{calM--;if(calM<0){calM=11;calY--}render()};
+ $("nextM").onclick=()=>{calM++;if(calM>11){calM=0;calY++}render()};
 }
 async function save(){
  const und=$("fUndated").checked;
