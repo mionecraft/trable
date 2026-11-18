@@ -130,14 +130,14 @@ input[type=text]{flex:1;min-width:140px}
  <div class="row"><label></label><label style="width:auto;font-weight:600;font-size:13px"><input type="checkbox" id="fUndated"> 날짜 아직 미정</label></div>
  <button class="save" id="saveBtn">저장 (4명 모두에게 바로 보임)</button>
  <div class="row" id="editBtns" style="display:none;gap:8px">
-  <button type="button" class="more" id="skipDayBtn" style="flex:1;margin:0;border-color:#e8a200;color:#8a5f00">이 날만 빼기</button>
+  <button type="button" class="more" id="skipDayBtn" style="flex:1;margin:0;border-color:#e8a200;color:#8a5f00">이 날만 지우기</button>
   <button type="button" class="more" id="delEditBtn" style="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff">이 일정 삭제</button>
  </div>
  <button type="button" class="more" id="cancelEdit" style="display:none" onclick="endEdit()">수정 취소</button>
 </div></section>
 
 <section class="card"><h2>날짜 미정 일정</h2><ul class="undated" id="undated"></ul></section>
-<p class="hint" style="text-align:center">근무시간 9:00~18:00 기준 · 막대를 누르면 지우기/이 날만 빼기 · 30초마다 자동 새로고침</p>
+<p class="hint" style="text-align:center">근무시간 9:00~18:00 기준 · 막대를 누르면 수정·그날만 지우기 · 30초마다 자동 새로고침</p>
 </div>
 
 <div class="pop" id="pop"><div class="sheet" id="sheet"></div></div>
@@ -344,18 +344,19 @@ function openItem(id,s){
  const rep=it.rep&&it.rep.length;
  const when=rep?('매주 '+it.rep.map(w=>WD[w]).join("·")+'요일 ('+it.from+' 부터'+(it.to?' ~ '+it.to+' 까지':'')+')'):(it.to&&it.to!==it.from?it.from+' ~ '+it.to:it.from);
  $("sheet").innerHTML='<h3>'+NM(it.who)+' · '+it.kind+'</h3><div>'+when+'</div><div>'+it.ranges.map(r=>hm(r[0])+'~'+hm(r[1])).join(", ")+' 자리 비움</div>'+(it.memo?'<div class="hint">'+esc(it.memo)+'</div>':'')+
-  '<div class="btns"><button id="editBtn">수정</button>'+((rep||(it.to&&it.to!==it.from))?'<button id="skipBtn">'+md(s)+'만 빼기</button>':'')+'<button class="del" id="delBtn">이 일정 전체 지우기</button><button id="closeBtn">닫기</button></div>';
+  '<div class="btns"><button id="editBtn">수정</button>'+((rep||(it.to&&it.to!==it.from))?'<button class="del" id="skipBtn">'+md(s)+'만 지우기</button><button id="delBtn" style="flex:0 0 100%;font-size:12px;color:#7a869c;border-color:#c5ccd8">반복 전체 지우기</button>':'<button class="del" id="delBtn">지우기</button>')+'<button id="closeBtn">닫기</button></div>';
  $("pop").classList.add("show");
  $("closeBtn").onclick=closePop;
  $("delBtn").onclick=()=>delItem(id);
  $("editBtn").onclick=()=>{closePop();startEdit(it)};
- const sk=$("skipBtn"); if(sk) sk.onclick=async()=>{try{await mutate(db=>{const t=db.items.find(x=>x.id===id); if(t){t.skip=t.skip||[]; if(!t.skip.includes(s)) t.skip.push(s)}}); toast(md(s)+" 뺐습니다")}catch(e){toast("저장 안 됨: "+e.message)} closePop()};
+ const sk=$("skipBtn"); if(sk) sk.onclick=async()=>{try{await mutate(db=>{const t=db.items.find(x=>x.id===id); if(t){t.skip=t.skip||[]; if(!t.skip.includes(s)) t.skip.push(s)}}); toast(md(s)+"만 지웠습니다")}catch(e){toast("저장 안 됨: "+e.message)} closePop()};
 }
 const closePop=()=>$("pop").classList.remove("show");
 async function delItem(id){
  const it=DB.items.find(x=>x.id===id); if(!it) return false;
  const rep=(it.rep&&it.rep.length);
- if(!confirm(NM(it.who)+" "+it.kind+(rep?" (매주 반복 전체)":"")+" 일정을 지울까요?")) return false;
+ const multi=rep||(it.to&&it.to!==it.from);
+ if(!confirm(multi?("⚠ "+NM(it.who)+" "+it.kind+" — "+md(it.from)+" ~ "+(it.to?md(it.to):"끝없음")+" 모든 날이 지워집니다.\n하루만 지우려면 [취소] 후 'ㅇ일만 지우기'를 누르세요.\n\n정말 전체를 지울까요?"):(NM(it.who)+" "+it.kind+" 일정을 지울까요?"))) return false;
  let ok=false;
  try{await mutate(db=>{db.items=db.items.filter(x=>x.id!==id)}); toast("지웠습니다"); ok=true}catch(e){toast("저장 안 됨: "+e.message)}
  closePop(); return ok;
@@ -391,8 +392,8 @@ function init(){
  $("saveBtn").onclick=save;
  $("delEditBtn").onclick=async()=>{ const id=editId; if(!id) return; const ok=await delItem(id); if(ok){ endEdit(); syncExisting(); } };
  $("skipDayBtn").onclick=async()=>{ const id=editId, day=pickDay||$("fFrom").value; if(!id||!day) return;
-   if(!confirm(md(day)+" 하루만 이 일정에서 뺄까요?")) return;
-   try{await mutate(db=>{const t=db.items.find(x=>x.id===id); if(t){t.skip=t.skip||[]; if(!t.skip.includes(day)) t.skip.push(day)}}); toast(md(day)+" 뺐습니다"); endEdit(); syncExisting();}catch(e){toast("저장 안 됨: "+e.message)} };
+   if(!confirm(md(day)+" 하루만 지울까요? (다른 날은 그대로)")) return;
+   try{await mutate(db=>{const t=db.items.find(x=>x.id===id); if(t){t.skip=t.skip||[]; if(!t.skip.includes(day)) t.skip.push(day)}}); toast(md(day)+"만 지웠습니다"); endEdit(); syncExisting();}catch(e){toast("저장 안 됨: "+e.message)} };
  $("fFrom").addEventListener("change",()=>{pickDay=$("fFrom").value; if(editId) endEdit(); syncExisting();});
  $("fUndated").addEventListener("change",syncExisting);
  $("prevM").onclick=()=>{calM--;if(calM<0){calM=11;calY--}render()};
@@ -424,7 +425,9 @@ function startEdit(it,quiet){
  else {F.mode="work";$("fT1").value=r[0][1];$("fT2").value=r[1][0]}
  $("fFrom").value=it.from||""; $("fTo").value=it.to||""; $("fMemo").value=it.memo||""; $("fUndated").checked=!it.from;
  ["fWho","fKind","fRep","fMode"].forEach((e,i)=>paint(e,["who","kind","rep","mode"][i])); timeUI();
- $("saveBtn").textContent="수정 저장"; $("cancelEdit").style.display="inline-block"; $("editBtns").style.display="flex"; const multi=(it.rep&&it.rep.length)||(it.to&&it.to!==it.from); $("skipDayBtn").style.display=multi?"block":"none"; $("skipDayBtn").textContent=md(pickDay||$("fFrom").value)+"만 빼기";
+ $("saveBtn").textContent="수정 저장"; $("cancelEdit").style.display="inline-block"; $("editBtns").style.display="flex"; const multi=(it.rep&&it.rep.length)||(it.to&&it.to!==it.from); $("skipDayBtn").style.display=multi?"block":"none"; $("skipDayBtn").textContent=md(pickDay||$("fFrom").value)+"만 지우기";
+ if(multi){ $("skipDayBtn").style.cssText="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff;display:block"; $("delEditBtn").textContent="반복 전체 지우기"; $("delEditBtn").style.cssText="flex:0 0 auto;margin:0;border-color:#c5ccd8;background:#fff;color:#7a869c;font-size:12px;padding:8px 10px"; }
+ else { $("delEditBtn").textContent="이 일정 삭제"; $("delEditBtn").style.cssText="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff"; }
  $("formCard").querySelector("h2").textContent="일정 수정 중 — "+NM(it.who)+" "+it.kind+((it.rep&&it.rep.length)?" (매주 반복 · 날짜 칸 = 반복 기간)":"");
  if(!quiet) $("formCard").scrollIntoView({behavior:"smooth",block:"start"});
  if(!quiet) syncExisting();
