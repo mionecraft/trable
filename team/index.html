@@ -108,7 +108,7 @@ input[type=text]{flex:1;min-width:140px}
 
 <div class="grid2">
  <section class="card"><h2 id="todayTitle">오늘</h2><div id="callnow"></div><div class="now" id="now"></div><div id="todayDay"></div></section>
- <section class="card"><h2>혼자 근무하는 시간 (앞으로 8주)</h2><div class="alerts" id="alerts"></div></section>
+ <section class="card"><h2>혼자 근무하는 시간</h2><div class="alerts" id="alerts"></div></section>
 </div>
 <div style="height:14px"></div>
 
@@ -142,7 +142,7 @@ input[type=text]{flex:1;min-width:140px}
 <script>
 // ===== 설정 =====
 const API="https://api.npoint.io/9e4cd48123e5dd28804d";
-const PEOPLE=["전선숙","이은우","박지숙","손가인"];
+const PEOPLE=["전선숙","박지숙","이은우","손가인"];
 const NM=p=>p==="전선숙"?"팀장님":p;
 const ROLE={"전선숙":"팀장"};
 const KINDS=["연가","반차","대체휴무","특별휴가","대휴·특휴","공가","병가","교육","출장","육아시간","외출","기타"];
@@ -274,16 +274,18 @@ function render(){
  }else{
   $("now").innerHTML=""; $("callnow").className="callnow ok"; $("callnow").textContent=(HOL[today]||"주말")+" — 근무일 아님"; $("todayDay").innerHTML="";
  }
- // 경고 8주
+ // 혼자 근무 알림
  let al=[]; let d=parse(today);
- for(let i=0;i<56;i++,d=addD(d,1)){
+ // 넣어 둔 일정의 마지막 날까지 (끝 없는 매주 반복만 있으면 1년까지)
+ let lastDay=today; DB.items.forEach(it=>{ if(!it.from) return; let e=it.to||(it.rep&&it.rep.length?ymd(addD(parse(today),365)):it.from); if(e>lastDay) lastDay=e; });
+ for(;ymd(d)<=lastDay;d=addD(d,1)){
   const s=ymd(d); if(!isWork(s)) continue;
   dayInfo(DB.items,s).segs.forEach(g=>{
    if(s===today&&g.b<=mins) return;
    if(g.inP.length<=1) al.push({s,g});
   });
  }
- $("alerts").innerHTML=al.length?al.map(x=>'<div class="al '+(x.g.inP.length?'one':'zero')+'" data-go="'+x.s+'"><span class="tag">'+(x.g.inP.length?'혼자':'모두 부재')+'</span><b>'+md(x.s)+'</b> '+hm(x.g.a)+'~'+hm(x.g.b)+(x.g.inP.length?' · <b>'+NM(x.g.inP[0])+'</b> 혼자 근무':' · 아무도 없음')+'</div>').join(""):'<div class="none">앞으로 8주 동안 혼자 근무하는 시간 없음 👍</div>';
+ $("alerts").innerHTML=al.length?al.map(x=>'<div class="al '+(x.g.inP.length?'one':'zero')+'" data-go="'+x.s+'"><span class="tag">'+(x.g.inP.length?'혼자':'모두 부재')+'</span><b>'+md(x.s)+'</b> '+hm(x.g.a)+'~'+hm(x.g.b)+(x.g.inP.length?' · <b>'+NM(x.g.inP[0])+'</b> 혼자 근무':' · 아무도 없음')+'</div>').join(""):'<div class="none">혼자 근무하는 시간 없음 👍</div>';
  // 월별 달력
  renderCal(today);
  // 미정
