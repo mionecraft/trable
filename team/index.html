@@ -96,6 +96,9 @@ input[type=text]{flex:1;min-width:140px}
 .legend{font-size:12px;color:var(--mut);margin:8px 2px 4px}.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin:0 3px 0 6px}
 .legend .lz{background:var(--red)}.legend .lo{background:var(--yel)}
 #days .day{border-top:0;margin-top:8px}
+.exist{background:#f4f9ff;border:2px dashed #9cc9ff;border-radius:12px;padding:8px 10px;font-size:14px;display:none}
+.exist b{color:var(--navy)}.exist .eb{display:inline-block;margin:4px 6px 0 0;padding:5px 10px;border-radius:16px;border:2px solid var(--navy);background:#fff;font-weight:800;font-size:13px;cursor:pointer;color:var(--navy)}
+.exist .eb.on{background:var(--navy);color:#fff}
 @media(min-width:760px){.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.grid2 .card{margin-bottom:0}}
 </style>
 </head>
@@ -117,8 +120,9 @@ input[type=text]{flex:1;min-width:140px}
 <section class="card" id="formCard"><h2>일정 넣기</h2>
 <div class="form">
  <div class="row"><label>이름</label><div id="fWho" class="row"></div></div>
- <div class="row"><label>종류</label><div id="fKind" class="row"></div></div>
  <div class="row"><label>날짜</label><input type="date" id="fFrom"> ~ <input type="date" id="fTo"><span class="hint">하루면 뒤 칸 비움</span></div>
+ <div id="fExist" class="exist"></div>
+ <div class="row"><label>종류</label><div id="fKind" class="row"></div></div>
  <div class="row"><label>반복</label><div id="fRep" class="row"></div><span class="hint">요일 고르면 매주 반복 (날짜 = 시작~끝, 끝 비우면 계속)</span></div>
  <div class="row"><label>시간</label><div id="fMode" class="row"></div></div>
  <div class="row" id="timeRow"><label></label><select id="fT1"></select> ~ <select id="fT2"></select><span class="hint" id="timeHint"></span></div>
@@ -198,7 +202,7 @@ async function load(){
  }catch(e){
   online=false; try{const c=localStorage.getItem("teamboard"); if(c) DB=JSON.parse(c)}catch(e2){}
  }
- render();
+ render(); if(!editId) syncExisting();
 }
 // 저장 직전에 최신본을 다시 받아서 내 변경만 얹음 → 동시에 고쳐도 남의 입력이 안 지워짐
 async function mutate(fn){
@@ -323,6 +327,8 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 document.addEventListener("click",e=>{
  const b=e.target.closest(".blk"); if(b) return openItem(b.dataset.id,b.dataset.d);
  const c=e.target.closest("[data-day]"); if(c){selDay=c.dataset.day;render();return;}
+ const ed=e.target.closest("[data-edit]"); if(ed){const it=DB.items.find(x=>x.id===ed.dataset.edit); if(it){startEdit(it,true); syncExisting();} return;}
+ const nw=e.target.closest("[data-newitem]"); if(nw){endEdit(); $("fExist").innerHTML='<b>'+NM(F.who)+' · '+md(pickDay||$("fFrom").value)+'</b> — 새 일정 넣는 중'; return;}
  const g=e.target.closest("[data-go]"); if(g){selDay=g.dataset.go;const d=parse(selDay);calY=d.getFullYear();calM=d.getMonth();render();$("cal").scrollIntoView({behavior:"smooth",block:"start"});return;}
  const x=e.target.closest("[data-del]"); if(x) return delItem(x.dataset.del);
  if(e.target.id==="pop") closePop();
@@ -356,6 +362,7 @@ function chips(el,arr,key,multi,label){
   if(multi){const i=F[key].indexOf(v); i<0?F[key].push(v):F[key].splice(i,1)} else F[key]=v;
   if(key==="kind"&&v==="육아시간"&&F.mode==="full"){F.mode="work";paint("fMode","mode");}
   if(key==="who") try{localStorage.setItem("teamboard_me",v)}catch(e){}
+  if(key==="who"){ if(editId) endEdit(); setTimeout(syncExisting,0); }
   paint(el,key); timeUI();};
 }
 function paint(el,key){[...$(el).children].forEach(b=>{let v=b.dataset.v; if(key==="rep") v=+v; b.classList.toggle("on",Array.isArray(F[key])?F[key].includes(v):F[key]===v)})}
@@ -374,11 +381,28 @@ function init(){
  $("fFrom").value=ymd(new Date());
  paint("fWho","who"); paint("fMode","mode"); timeUI();
  $("saveBtn").onclick=save;
+ $("fFrom").addEventListener("change",()=>{pickDay=$("fFrom").value; if(editId) endEdit(); syncExisting();});
+ $("fUndated").addEventListener("change",syncExisting);
  $("prevM").onclick=()=>{calM--;if(calM<0){calM=11;calY--}render()};
  $("nextM").onclick=()=>{calM++;if(calM>11){calM=0;calY++}render()};
 }
-let editId=null;
-function startEdit(it){
+let editId=null, pickDay=null;
+function whenTxt(it){return (it.rep&&it.rep.length)?'매주 '+it.rep.map(w=>WD[w]).join('·')+(it.to?' ('+md(it.to)+'까지)':''):(it.to&&it.to!==it.from?md(it.from)+'~'+md(it.to):md(it.from))}
+function rangeTxt(it){const r=it.ranges; return (r.length===1&&r[0][0]<=DS&&r[0][1]>=DE)?'종일':r.map(x=>hm(x[0])+'~'+hm(x[1])).join(', ')}
+// 이름·날짜를 고르면 그 사람의 그날 일정을 불러옴
+function syncExisting(){
+ const box=$("fExist"); const day=pickDay||$("fFrom").value;
+ if(!F.who||!day||$("fUndated").checked){box.style.display="none";return;}
+ const list=itemsOn(DB.items,day).filter(it=>it.who===F.who);
+ box.style.display="block";
+ if(!list.length){ if(editId) endEdit(true); box.innerHTML=NM(F.who)+' · '+md(day)+' — 이미 있는 일정 없음 (새로 넣기)'; return; }
+ if(!editId||!list.some(x=>x.id===editId)) startEdit(list[list.length-1],true);
+ box.innerHTML='<b>'+NM(F.who)+' · '+md(day)+'에 이미 있는 일정</b> (누르면 아래에 불러옴)<br>'+
+  list.map(it=>'<span class="eb'+(it.id===editId?' on':'')+'" data-edit="'+it.id+'">'+it.kind+' '+rangeTxt(it)+' · '+whenTxt(it)+'</span>').join('')+
+  '<span class="eb" data-newitem="1">+ 새 일정 따로 넣기</span>';
+}
+function startEdit(it,quiet){
+ if(!quiet) pickDay=null; else pickDay=pickDay||$("fFrom").value;
  editId=it.id; F.who=it.who; F.kind=it.kind; F.rep=(it.rep||[]).slice();
  const r=it.ranges;
  if(r.length===1&&r[0][0]<=DS&&r[0][1]>=DE){F.mode="full"}
@@ -388,9 +412,10 @@ function startEdit(it){
  ["fWho","fKind","fRep","fMode"].forEach((e,i)=>paint(e,["who","kind","rep","mode"][i])); timeUI();
  $("saveBtn").textContent="수정 저장"; $("cancelEdit").style.display="inline-block";
  $("formCard").querySelector("h2").textContent="일정 수정 중 — "+NM(it.who)+" "+it.kind;
- $("formCard").scrollIntoView({behavior:"smooth",block:"start"});
+ if(!quiet) $("formCard").scrollIntoView({behavior:"smooth",block:"start"});
+ if(!quiet) syncExisting();
 }
-function endEdit(){editId=null;$("saveBtn").textContent="저장 (4명 모두에게 바로 보임)";$("cancelEdit").style.display="none";$("formCard").querySelector("h2").textContent="일정 넣기"}
+function endEdit(keep){editId=null; if(!keep){} F.kind=null;F.rep=[];F.mode="full";$("fTo").value="";$("fMemo").value=""; if(pickDay){$("fFrom").value=pickDay} ["fKind","fRep","fMode"].forEach((e,i)=>paint(e,["kind","rep","mode"][i])); timeUI();$("saveBtn").textContent="저장 (4명 모두에게 바로 보임)";$("cancelEdit").style.display="none";$("formCard").querySelector("h2").textContent="일정 넣기"}
 async function save(){
  const und=$("fUndated").checked;
  if(!F.who) return toast("이름을 고르세요");
@@ -406,7 +431,7 @@ async function save(){
   from:und?"":from,to:und?"":(to||""),rep:und?[]:F.rep.slice().sort(),ranges,memo:$("fMemo").value.trim()};
  $("saveBtn").disabled=true;
  const eid=editId;
- try{await mutate(db=>{ if(eid){const k=db.items.findIndex(x=>x.id===eid); if(k>=0){it.id=eid; it.skip=db.items[k].skip; db.items[k]=it} else db.items.push(it)} else db.items.push(it) }); toast(eid?"수정했습니다":"저장했습니다"); endEdit(); $("fMemo").value=""; $("fTo").value=""; F.rep=[]; paint("fRep","rep"); $("fUndated").checked=false;}
+ try{await mutate(db=>{ if(eid){const k=db.items.findIndex(x=>x.id===eid); if(k>=0){it.id=eid; it.skip=db.items[k].skip; db.items[k]=it} else db.items.push(it)} else db.items.push(it) }); toast(eid?"수정했습니다":"저장했습니다"); endEdit(); syncExisting(); $("fMemo").value=""; $("fTo").value=""; F.rep=[]; paint("fRep","rep"); $("fUndated").checked=false;}
  catch(e){toast("저장 안 됨: "+e.message)}
  $("saveBtn").disabled=false;
 }
