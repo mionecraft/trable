@@ -129,6 +129,10 @@ input[type=text]{flex:1;min-width:140px}
  <div class="row"><label>메모</label><input type="text" id="fMemo" placeholder="(선택)"></div>
  <div class="row"><label></label><label style="width:auto;font-weight:600;font-size:13px"><input type="checkbox" id="fUndated"> 날짜 아직 미정</label></div>
  <button class="save" id="saveBtn">저장 (4명 모두에게 바로 보임)</button>
+ <div class="row" id="editBtns" style="display:none;gap:8px">
+  <button type="button" class="more" id="skipDayBtn" style="flex:1;margin:0;border-color:#e8a200;color:#8a5f00">이 날만 빼기</button>
+  <button type="button" class="more" id="delEditBtn" style="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff">이 일정 삭제</button>
+ </div>
  <button type="button" class="more" id="cancelEdit" style="display:none" onclick="endEdit()">수정 취소</button>
 </div></section>
 
@@ -349,10 +353,12 @@ function openItem(id,s){
 }
 const closePop=()=>$("pop").classList.remove("show");
 async function delItem(id){
- const it=DB.items.find(x=>x.id===id); if(!it) return;
- if(!confirm(NM(it.who)+" "+it.kind+" 일정을 지울까요?")) return;
- try{await mutate(db=>{db.items=db.items.filter(x=>x.id!==id)}); toast("지웠습니다")}catch(e){toast("저장 안 됨: "+e.message)}
- closePop();
+ const it=DB.items.find(x=>x.id===id); if(!it) return false;
+ const rep=(it.rep&&it.rep.length);
+ if(!confirm(NM(it.who)+" "+it.kind+(rep?" (매주 반복 전체)":"")+" 일정을 지울까요?")) return false;
+ let ok=false;
+ try{await mutate(db=>{db.items=db.items.filter(x=>x.id!==id)}); toast("지웠습니다"); ok=true}catch(e){toast("저장 안 됨: "+e.message)}
+ closePop(); return ok;
 }
 function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",2200)}
 
@@ -383,6 +389,10 @@ function init(){
  $("fFrom").value=ymd(new Date());
  paint("fWho","who"); paint("fMode","mode"); timeUI();
  $("saveBtn").onclick=save;
+ $("delEditBtn").onclick=async()=>{ const id=editId; if(!id) return; const ok=await delItem(id); if(ok){ endEdit(); syncExisting(); } };
+ $("skipDayBtn").onclick=async()=>{ const id=editId, day=pickDay||$("fFrom").value; if(!id||!day) return;
+   if(!confirm(md(day)+" 하루만 이 일정에서 뺄까요?")) return;
+   try{await mutate(db=>{const t=db.items.find(x=>x.id===id); if(t){t.skip=t.skip||[]; if(!t.skip.includes(day)) t.skip.push(day)}}); toast(md(day)+" 뺐습니다"); endEdit(); syncExisting();}catch(e){toast("저장 안 됨: "+e.message)} };
  $("fFrom").addEventListener("change",()=>{pickDay=$("fFrom").value; if(editId) endEdit(); syncExisting();});
  $("fUndated").addEventListener("change",syncExisting);
  $("prevM").onclick=()=>{calM--;if(calM<0){calM=11;calY--}render()};
@@ -414,12 +424,12 @@ function startEdit(it,quiet){
  else {F.mode="work";$("fT1").value=r[0][1];$("fT2").value=r[1][0]}
  $("fFrom").value=it.from||""; $("fTo").value=it.to||""; $("fMemo").value=it.memo||""; $("fUndated").checked=!it.from;
  ["fWho","fKind","fRep","fMode"].forEach((e,i)=>paint(e,["who","kind","rep","mode"][i])); timeUI();
- $("saveBtn").textContent="수정 저장"; $("cancelEdit").style.display="inline-block";
+ $("saveBtn").textContent="수정 저장"; $("cancelEdit").style.display="inline-block"; $("editBtns").style.display="flex"; const multi=(it.rep&&it.rep.length)||(it.to&&it.to!==it.from); $("skipDayBtn").style.display=multi?"block":"none"; $("skipDayBtn").textContent=md(pickDay||$("fFrom").value)+"만 빼기";
  $("formCard").querySelector("h2").textContent="일정 수정 중 — "+NM(it.who)+" "+it.kind+((it.rep&&it.rep.length)?" (매주 반복 · 날짜 칸 = 반복 기간)":"");
  if(!quiet) $("formCard").scrollIntoView({behavior:"smooth",block:"start"});
  if(!quiet) syncExisting();
 }
-function endEdit(keep){editId=null; if(!keep){} F.kind=null;F.rep=[];F.mode="full";$("fTo").value="";$("fMemo").value=""; if(pickDay){$("fFrom").value=pickDay} ["fKind","fRep","fMode"].forEach((e,i)=>paint(e,["kind","rep","mode"][i])); timeUI();$("saveBtn").textContent="저장 (4명 모두에게 바로 보임)";$("cancelEdit").style.display="none";$("formCard").querySelector("h2").textContent="일정 넣기"}
+function endEdit(keep){editId=null; $("editBtns").style.display="none"; if(!keep){} F.kind=null;F.rep=[];F.mode="full";$("fTo").value="";$("fMemo").value=""; if(pickDay){$("fFrom").value=pickDay} ["fKind","fRep","fMode"].forEach((e,i)=>paint(e,["kind","rep","mode"][i])); timeUI();$("saveBtn").textContent="저장 (4명 모두에게 바로 보임)";$("cancelEdit").style.display="none";$("formCard").querySelector("h2").textContent="일정 넣기"}
 async function save(){
  const und=$("fUndated").checked;
  if(!F.who) return toast("이름을 고르세요");
