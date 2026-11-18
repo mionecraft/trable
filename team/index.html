@@ -119,7 +119,7 @@ input[type=text]{flex:1;min-width:140px}
  <div class="row"><label>이름</label><div id="fWho" class="row"></div></div>
  <div class="row"><label>종류</label><div id="fKind" class="row"></div></div>
  <div class="row"><label>날짜</label><input type="date" id="fFrom"> ~ <input type="date" id="fTo"><span class="hint">하루면 뒤 칸 비움</span></div>
- <div class="row"><label>반복</label><div id="fRep" class="row"></div><span class="hint">요일 고르면 매주 반복(날짜 = 시작일)</span></div>
+ <div class="row"><label>반복</label><div id="fRep" class="row"></div><span class="hint">요일 고르면 매주 반복 (날짜 = 시작~끝, 끝 비우면 계속)</span></div>
  <div class="row"><label>시간</label><div id="fMode" class="row"></div></div>
  <div class="row" id="timeRow"><label></label><select id="fT1"></select> ~ <select id="fT2"></select><span class="hint" id="timeHint"></span></div>
  <div class="row"><label>메모</label><input type="text" id="fMemo" placeholder="(선택)"></div>
@@ -326,7 +326,7 @@ document.addEventListener("click",e=>{
 function openItem(id,s){
  const it=DB.items.find(x=>x.id===id); if(!it) return;
  const rep=it.rep&&it.rep.length;
- const when=rep?('매주 '+it.rep.map(w=>WD[w]).join("·")+'요일 ('+it.from+' 부터)'):(it.to&&it.to!==it.from?it.from+' ~ '+it.to:it.from);
+ const when=rep?('매주 '+it.rep.map(w=>WD[w]).join("·")+'요일 ('+it.from+' 부터'+(it.to?' ~ '+it.to+' 까지':'')+')'):(it.to&&it.to!==it.from?it.from+' ~ '+it.to:it.from);
  $("sheet").innerHTML='<h3>'+it.who+' · '+it.kind+'</h3><div>'+when+'</div><div>'+it.ranges.map(r=>hm(r[0])+'~'+hm(r[1])).join(", ")+' 자리 비움</div>'+(it.memo?'<div class="hint">'+esc(it.memo)+'</div>':'')+
   '<div class="btns">'+((rep||(it.to&&it.to!==it.from))?'<button id="skipBtn">'+md(s)+'만 빼기</button>':'')+'<button class="del" id="delBtn">이 일정 전체 지우기</button><button id="closeBtn">닫기</button></div>';
  $("pop").classList.add("show");
@@ -384,7 +384,7 @@ async function save(){
  if(F.mode!=="full"){ if(t2<=t1) return toast("시간을 확인하세요");
   ranges=F.mode==="away"?[[t1,t2]]:[[DS,t1],[t2,DE]].filter(r=>r[1]>r[0]); }
  const it={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),who:F.who,kind:F.kind,
-  from:und?"":from,to:und?"":(F.rep.length?"":(to||"")),rep:und?[]:F.rep.slice().sort(),ranges,memo:$("fMemo").value.trim()};
+  from:und?"":from,to:und?"":(to||""),rep:und?[]:F.rep.slice().sort(),ranges,memo:$("fMemo").value.trim()};
  $("saveBtn").disabled=true;
  try{await mutate(db=>db.items.push(it)); toast("저장했습니다"); $("fMemo").value=""; $("fTo").value=""; F.rep=[]; paint("fRep","rep"); $("fUndated").checked=false;}
  catch(e){toast("저장 안 됨: "+e.message)}
