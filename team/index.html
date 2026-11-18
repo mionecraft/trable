@@ -326,10 +326,10 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 // ===== 막대 누르면 =====
 document.addEventListener("click",e=>{
  const b=e.target.closest(".blk"); if(b) return openItem(b.dataset.id,b.dataset.d);
- const c=e.target.closest("[data-day]"); if(c){selDay=c.dataset.day;render();return;}
+ const c=e.target.closest("[data-day]"); if(c){selDay=c.dataset.day;linkForm(selDay);render();return;}
  const ed=e.target.closest("[data-edit]"); if(ed){const it=DB.items.find(x=>x.id===ed.dataset.edit); if(it){startEdit(it,true); syncExisting();} return;}
  const nw=e.target.closest("[data-newitem]"); if(nw){endEdit(); $("fExist").innerHTML='<b>'+NM(F.who)+' · '+md(pickDay||$("fFrom").value)+'</b> — 새 일정 넣는 중'; return;}
- const g=e.target.closest("[data-go]"); if(g){selDay=g.dataset.go;const d=parse(selDay);calY=d.getFullYear();calM=d.getMonth();render();$("cal").scrollIntoView({behavior:"smooth",block:"start"});return;}
+ const g=e.target.closest("[data-go]"); if(g){selDay=g.dataset.go;linkForm(selDay);const d=parse(selDay);calY=d.getFullYear();calM=d.getMonth();render();$("cal").scrollIntoView({behavior:"smooth",block:"start"});return;}
  const x=e.target.closest("[data-del]"); if(x) return delItem(x.dataset.del);
  if(e.target.id==="pop") closePop();
 });
@@ -387,6 +387,8 @@ function init(){
  $("nextM").onclick=()=>{calM++;if(calM>11){calM=0;calY++}render()};
 }
 let editId=null, pickDay=null;
+// 달력에서 고른 날짜 → 일정 넣기 칸에도 같은 날짜
+function linkForm(day){ if(editId) endEdit(true); pickDay=day; $("fFrom").value=day; $("fTo").value=""; syncExisting(); }
 function whenTxt(it){return (it.rep&&it.rep.length)?'매주 '+it.rep.map(w=>WD[w]).join('·')+(it.to?' ('+md(it.to)+'까지)':''):(it.to&&it.to!==it.from?md(it.from)+'~'+md(it.to):md(it.from))}
 function rangeTxt(it){const r=it.ranges; return (r.length===1&&r[0][0]<=DS&&r[0][1]>=DE)?'종일':r.map(x=>hm(x[0])+'~'+hm(x[1])).join(', ')}
 // 이름·날짜를 고르면 그 사람의 그날 일정을 불러옴
@@ -411,7 +413,7 @@ function startEdit(it,quiet){
  $("fFrom").value=it.from||""; $("fTo").value=it.to||""; $("fMemo").value=it.memo||""; $("fUndated").checked=!it.from;
  ["fWho","fKind","fRep","fMode"].forEach((e,i)=>paint(e,["who","kind","rep","mode"][i])); timeUI();
  $("saveBtn").textContent="수정 저장"; $("cancelEdit").style.display="inline-block";
- $("formCard").querySelector("h2").textContent="일정 수정 중 — "+NM(it.who)+" "+it.kind;
+ $("formCard").querySelector("h2").textContent="일정 수정 중 — "+NM(it.who)+" "+it.kind+((it.rep&&it.rep.length)?" (매주 반복 · 날짜 칸 = 반복 기간)":"");
  if(!quiet) $("formCard").scrollIntoView({behavior:"smooth",block:"start"});
  if(!quiet) syncExisting();
 }
