@@ -169,6 +169,8 @@ function dayInfo(items,s){
  const list=itemsOn(items,s);
  const away={}; PEOPLE.forEach(p=>away[p]=[]);
  list.forEach(it=>it.ranges.forEach(r=>{ if(away[it.who]) away[it.who].push({a:Math.max(DS,r[0]),b:Math.min(DE,r[1]),it}); }));
+ // 하루 종일 비는 일정이 있으면 그날은 그것만 (반복 육아시간 등은 숨김)
+ PEOPLE.forEach(p=>{ const f=away[p].filter(x=>x.a<=DS&&x.b>=DE); if(f.length) away[p]=[f[f.length-1]]; });
  // 시간 경계마다 근무 인원 계산
  const cuts=new Set([DS,DE]);
  Object.values(away).flat().forEach(x=>{cuts.add(x.a);cuts.add(x.b)});
