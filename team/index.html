@@ -125,6 +125,7 @@ input[type=text]{flex:1;min-width:140px}
  <div class="row"><label>메모</label><input type="text" id="fMemo" placeholder="(선택)"></div>
  <div class="row"><label></label><label style="width:auto;font-weight:600;font-size:13px"><input type="checkbox" id="fUndated"> 날짜 아직 미정</label></div>
  <button class="save" id="saveBtn">저장 (4명 모두에게 바로 보임)</button>
+ <button type="button" class="more" id="cancelEdit" style="display:none" onclick="endEdit()">수정 취소</button>
 </div></section>
 
 <section class="card"><h2>날짜 미정 일정</h2><ul class="undated" id="undated"></ul></section>
@@ -164,7 +165,7 @@ function itemsOn(items,s){
   if((it.skip||[]).includes(s)) return false;
   if(it.rep&&it.rep.length){ return s>=it.from && (!it.to||s<=it.to) && it.rep.includes(w); }
   return s>=it.from && s<=(it.to||it.from);
- });
+ }).filter((it,i,arr)=>!arr.slice(i+1).some(o=>o.who===it.who&&o.kind===it.kind)); // 같은 사람·같은 종류는 나중에 넣은 것만
 }
 function dayInfo(items,s){
  const list=itemsOn(items,s);
@@ -308,7 +309,7 @@ function renderCal(today){
   let chips="";
   PEOPLE.forEach(p=>{const a=info.away[p]; if(!a.length) return;
    const full=a.some(x=>x.a===DS&&x.b===DE);
-   chips+='<span class="mini" style="background:'+(COLOR[a[0].it.kind]||"#495057")+'">'+SHORT[p]+' '+(KS[a[0].it.kind]||a[0].it.kind)+'</span>';});
+   chips+='<span class="mini" style="background:'+(COLOR[a[0].it.kind]||"#495057")+'">'+p+' '+(KS[a[0].it.kind]||a[0].it.kind)+'</span>';});
   cells.push({s,h:'<div class="cell'+(z?' zero':o?' one':'')+(s===today?' today':'')+(s===selDay?' sel':'')+'" data-day="'+s+'"><span class="n">'+d+'</span>'+chips+'</div>'});
  }
  // 다 지나간 주는 줄째로 뺌
@@ -331,10 +332,11 @@ function openItem(id,s){
  const rep=it.rep&&it.rep.length;
  const when=rep?('매주 '+it.rep.map(w=>WD[w]).join("·")+'요일 ('+it.from+' 부터'+(it.to?' ~ '+it.to+' 까지':'')+')'):(it.to&&it.to!==it.from?it.from+' ~ '+it.to:it.from);
  $("sheet").innerHTML='<h3>'+NM(it.who)+' · '+it.kind+'</h3><div>'+when+'</div><div>'+it.ranges.map(r=>hm(r[0])+'~'+hm(r[1])).join(", ")+' 자리 비움</div>'+(it.memo?'<div class="hint">'+esc(it.memo)+'</div>':'')+
-  '<div class="btns">'+((rep||(it.to&&it.to!==it.from))?'<button id="skipBtn">'+md(s)+'만 빼기</button>':'')+'<button class="del" id="delBtn">이 일정 전체 지우기</button><button id="closeBtn">닫기</button></div>';
+  '<div class="btns"><button id="editBtn">수정</button>'+((rep||(it.to&&it.to!==it.from))?'<button id="skipBtn">'+md(s)+'만 빼기</button>':'')+'<button class="del" id="delBtn">이 일정 전체 지우기</button><button id="closeBtn">닫기</button></div>';
  $("pop").classList.add("show");
  $("closeBtn").onclick=closePop;
  $("delBtn").onclick=()=>delItem(id);
+ $("editBtn").onclick=()=>{closePop();startEdit(it)};
  const sk=$("skipBtn"); if(sk) sk.onclick=async()=>{try{await mutate(db=>{const t=db.items.find(x=>x.id===id); if(t){t.skip=t.skip||[]; if(!t.skip.includes(s)) t.skip.push(s)}}); toast(md(s)+" 뺐습니다")}catch(e){toast("저장 안 됨: "+e.message)} closePop()};
 }
 const closePop=()=>$("pop").classList.remove("show");
@@ -375,6 +377,20 @@ function init(){
  $("prevM").onclick=()=>{calM--;if(calM<0){calM=11;calY--}render()};
  $("nextM").onclick=()=>{calM++;if(calM>11){calM=0;calY++}render()};
 }
+let editId=null;
+function startEdit(it){
+ editId=it.id; F.who=it.who; F.kind=it.kind; F.rep=(it.rep||[]).slice();
+ const r=it.ranges;
+ if(r.length===1&&r[0][0]<=DS&&r[0][1]>=DE){F.mode="full"}
+ else if(r.length===1){F.mode="away";$("fT1").value=r[0][0];$("fT2").value=r[0][1]}
+ else {F.mode="work";$("fT1").value=r[0][1];$("fT2").value=r[1][0]}
+ $("fFrom").value=it.from||""; $("fTo").value=it.to||""; $("fMemo").value=it.memo||""; $("fUndated").checked=!it.from;
+ ["fWho","fKind","fRep","fMode"].forEach((e,i)=>paint(e,["who","kind","rep","mode"][i])); timeUI();
+ $("saveBtn").textContent="수정 저장"; $("cancelEdit").style.display="inline-block";
+ $("formCard").querySelector("h2").textContent="일정 수정 중 — "+NM(it.who)+" "+it.kind;
+ $("formCard").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function endEdit(){editId=null;$("saveBtn").textContent="저장 (4명 모두에게 바로 보임)";$("cancelEdit").style.display="none";$("formCard").querySelector("h2").textContent="일정 넣기"}
 async function save(){
  const und=$("fUndated").checked;
  if(!F.who) return toast("이름을 고르세요");
@@ -389,7 +405,8 @@ async function save(){
  const it={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),who:F.who,kind:F.kind,
   from:und?"":from,to:und?"":(to||""),rep:und?[]:F.rep.slice().sort(),ranges,memo:$("fMemo").value.trim()};
  $("saveBtn").disabled=true;
- try{await mutate(db=>db.items.push(it)); toast("저장했습니다"); $("fMemo").value=""; $("fTo").value=""; F.rep=[]; paint("fRep","rep"); $("fUndated").checked=false;}
+ const eid=editId;
+ try{await mutate(db=>{ if(eid){const k=db.items.findIndex(x=>x.id===eid); if(k>=0){it.id=eid; it.skip=db.items[k].skip; db.items[k]=it} else db.items.push(it)} else db.items.push(it) }); toast(eid?"수정했습니다":"저장했습니다"); endEdit(); $("fMemo").value=""; $("fTo").value=""; F.rep=[]; paint("fRep","rep"); $("fUndated").checked=false;}
  catch(e){toast("저장 안 됨: "+e.message)}
  $("saveBtn").disabled=false;
 }
