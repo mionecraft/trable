@@ -137,7 +137,8 @@ input[type=text]{flex:1;min-width:140px}
 <script>
 // ===== 설정 =====
 const API="https://api.npoint.io/9e4cd48123e5dd28804d";
-const PEOPLE=["전선숙","이은우","손가인","박지숙"];
+const PEOPLE=["전선숙","이은우","박지숙","손가인"];
+const NM=p=>p==="전선숙"?"팀장님":p;
 const ROLE={"전선숙":"팀장"};
 const KINDS=["연가","반차","대체휴무","특별휴가","대휴·특휴","공가","병가","교육","출장","육아시간","외출","기타"];
 const COLOR={"연가":"#4c6ef5","반차":"#748ffc","대체휴무":"#7048e8","특별휴가":"#ae3ec9","대휴·특휴":"#9c36b5","공가":"#1098ad","병가":"#868e96","교육":"#f08c00","출장":"#e8590c","육아시간":"#2b8a3e","외출":"#0ca678","기타":"#495057"};
@@ -217,7 +218,7 @@ async function mutate(fn){
 const $=id=>document.getElementById(id);
 const pct=m=>((m-DS)/(DE-DS)*100);
 function laneHTML(p,info,s){
- let h='<div class="lane"><div class="nm">'+p+'</div><div class="bar">'+ticks();
+ let h='<div class="lane"><div class="nm">'+NM(p)+'</div><div class="bar">'+ticks();
  info.away[p].forEach(x=>{
   const it=x.it, full=(x.a===DS&&x.b===DE);
   const w=pct(x.b)-pct(x.a);
@@ -236,7 +237,7 @@ function axisHTML(){return '<div class="axis">'+[540,720,780,960,1080].map(m=>'<
 function badge(info){
  const z=info.segs.filter(g=>g.inP.length===0), o=info.segs.filter(g=>g.inP.length===1);
  if(z.length) return '<span class="badge zero">모두 부재 '+z.map(g=>hm(g.a)+'~'+hm(g.b)).join(", ")+'</span>';
- if(o.length) return '<span class="badge one">1명 근무 '+o.map(g=>hm(g.a)+'~'+hm(g.b)+' '+g.inP[0]).join(", ")+'</span>';
+ if(o.length) return '<span class="badge one">1명 근무 '+o.map(g=>hm(g.a)+'~'+hm(g.b)+' '+NM(g.inP[0])).join(", ")+'</span>';
  const any=PEOPLE.some(p=>info.away[p].length);
  return any?'<span class="badge ok">근무 OK</span>':'';
 }
@@ -258,12 +259,12 @@ function render(){
   const inWork=mins>=DS&&mins<DE;
   $("now").innerHTML=PEOPLE.map(p=>{
    const x=info.away[p].find(x=>x.a<=t&&t<x.b);
-   return '<div class="person '+(x?'out':'in')+'"><b>'+p+'</b><span>'+(x?x.it.kind+' ~'+hm(x.b):'자리에 있음')+'</span></div>';
+   return '<div class="person '+(x?'out':'in')+'"><b>'+NM(p)+'</b><span>'+(x?x.it.kind+' ~'+hm(x.b):'자리에 있음')+'</span></div>';
   }).join("");
   const seg=info.segs.find(g=>g.a<=t&&t<g.b)||{inP:PEOPLE};
   const n=seg.inP.length;
   $("callnow").className="callnow "+(n===0?"zero":n===1?"one":"ok");
-  $("callnow").textContent=(inWork?"지금 ":"근무시간 아님 · 9시 기준 ")+(n===0?"모두 부재":"근무 중: "+seg.inP.join(", ")+" ("+n+"명)");
+  $("callnow").textContent=(inWork?"지금 ":"근무시간 아님 · 9시 기준 ")+(n===0?"모두 부재":"근무 중: "+seg.inP.map(NM).join(", ")+" ("+n+"명)");
   $("todayDay").innerHTML=dayHTML(today,false).replace('<div class="dhead">','<div class="dhead" style="display:none">');
  }else{
   $("now").innerHTML=""; $("callnow").className="callnow ok"; $("callnow").textContent=(HOL[today]||"주말")+" — 근무일 아님"; $("todayDay").innerHTML="";
@@ -277,12 +278,12 @@ function render(){
    if(g.inP.length<=1) al.push({s,g});
   });
  }
- $("alerts").innerHTML=al.length?al.map(x=>'<div class="al '+(x.g.inP.length?'one':'zero')+'" data-go="'+x.s+'"><span class="tag">'+(x.g.inP.length?'1명 근무':'모두 부재')+'</span><b>'+md(x.s)+'</b> '+hm(x.g.a)+'~'+hm(x.g.b)+(x.g.inP.length?' · '+x.g.inP[0]+' 근무':' · 모두 부재')+'</div>').join(""):'<div class="none">앞으로 8주 동안 1명 이하로 남는 시간 없음 👍</div>';
+ $("alerts").innerHTML=al.length?al.map(x=>'<div class="al '+(x.g.inP.length?'one':'zero')+'" data-go="'+x.s+'"><span class="tag">'+(x.g.inP.length?'1명 근무':'모두 부재')+'</span><b>'+md(x.s)+'</b> '+hm(x.g.a)+'~'+hm(x.g.b)+(x.g.inP.length?' · '+NM(x.g.inP[0])+' 근무':' · 모두 부재')+'</div>').join(""):'<div class="none">앞으로 8주 동안 1명 이하로 남는 시간 없음 👍</div>';
  // 월별 달력
  renderCal(today);
  // 미정
  const und=DB.items.filter(it=>!it.from);
- $("undated").innerHTML=und.length?und.map(it=>'<li><b>'+it.who+'</b> '+it.kind+(it.memo?' — '+esc(it.memo):'')+'<button class="x" data-del="'+it.id+'">지우기</button></li>').join(""):'<li class="none">없음</li>';
+ $("undated").innerHTML=und.length?und.map(it=>'<li><b>'+NM(it.who)+'</b> '+it.kind+(it.memo?' — '+esc(it.memo):'')+'<button class="x" data-del="'+it.id+'">지우기</button></li>').join(""):'<li class="none">없음</li>';
 }
 
 // ===== 월별 달력 =====
@@ -329,7 +330,7 @@ function openItem(id,s){
  const it=DB.items.find(x=>x.id===id); if(!it) return;
  const rep=it.rep&&it.rep.length;
  const when=rep?('매주 '+it.rep.map(w=>WD[w]).join("·")+'요일 ('+it.from+' 부터'+(it.to?' ~ '+it.to+' 까지':'')+')'):(it.to&&it.to!==it.from?it.from+' ~ '+it.to:it.from);
- $("sheet").innerHTML='<h3>'+it.who+' · '+it.kind+'</h3><div>'+when+'</div><div>'+it.ranges.map(r=>hm(r[0])+'~'+hm(r[1])).join(", ")+' 자리 비움</div>'+(it.memo?'<div class="hint">'+esc(it.memo)+'</div>':'')+
+ $("sheet").innerHTML='<h3>'+NM(it.who)+' · '+it.kind+'</h3><div>'+when+'</div><div>'+it.ranges.map(r=>hm(r[0])+'~'+hm(r[1])).join(", ")+' 자리 비움</div>'+(it.memo?'<div class="hint">'+esc(it.memo)+'</div>':'')+
   '<div class="btns">'+((rep||(it.to&&it.to!==it.from))?'<button id="skipBtn">'+md(s)+'만 빼기</button>':'')+'<button class="del" id="delBtn">이 일정 전체 지우기</button><button id="closeBtn">닫기</button></div>';
  $("pop").classList.add("show");
  $("closeBtn").onclick=closePop;
@@ -339,7 +340,7 @@ function openItem(id,s){
 const closePop=()=>$("pop").classList.remove("show");
 async function delItem(id){
  const it=DB.items.find(x=>x.id===id); if(!it) return;
- if(!confirm(it.who+" "+it.kind+" 일정을 지울까요?")) return;
+ if(!confirm(NM(it.who)+" "+it.kind+" 일정을 지울까요?")) return;
  try{await mutate(db=>{db.items=db.items.filter(x=>x.id!==id)}); toast("지웠습니다")}catch(e){toast("저장 안 됨: "+e.message)}
  closePop();
 }
@@ -361,7 +362,7 @@ function timeUI(){
  $("timeHint").textContent=F.mode==="work"?"이 시간만 근무 (앞뒤는 자리 비움)":"이 시간 동안 자리 비움";
 }
 function init(){
- chips("fWho",PEOPLE,"who"); chips("fKind",KINDS,"kind");
+ chips("fWho",PEOPLE,"who",false,NM); chips("fKind",KINDS,"kind");
  chips("fRep",[1,2,3,4,5],"rep",true,v=>WD[v]);
  $("fMode").innerHTML=[["full","종일"],["away","비우는 시간"],["work","근무하는 시간"]].map(x=>'<button type="button" class="chip" data-v="'+x[0]+'">'+x[1]+'</button>').join("");
  $("fMode").onclick=e=>{const b=e.target.closest(".chip"); if(!b) return; F.mode=b.dataset.v; paint("fMode","mode"); timeUI()};
