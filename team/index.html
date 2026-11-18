@@ -105,13 +105,13 @@ input[type=text]{flex:1;min-width:140px}
 
 <div class="grid2">
  <section class="card"><h2 id="todayTitle">오늘</h2><div id="callnow"></div><div class="now" id="now"></div><div id="todayDay"></div></section>
- <section class="card"><h2>근무 인원 알림 (앞으로 8주)</h2><div class="alerts" id="alerts"></div></section>
+ <section class="card"><h2>혼자 근무하는 시간 (앞으로 8주)</h2><div class="alerts" id="alerts"></div></section>
 </div>
 <div style="height:14px"></div>
 
 <section class="card"><div class="mhead"><button class="nav" id="prevM">◀</button><h2 id="mTitle"></h2><button class="nav" id="nextM">▶</button></div>
 <div class="cal" id="cal"></div>
-<div class="legend">칸 색: <i class="lz"></i>모두 부재 <i class="lo"></i>1명 근무 · 이름 = 그날 자리 비우는 사람</div>
+<div class="legend">칸 색: <i class="lz"></i>모두 부재 <i class="lo"></i>혼자 근무 · 이름 = 그날 자리 비우는 사람</div>
 <div id="days"></div></section>
 
 <section class="card" id="formCard"><h2>일정 넣기</h2>
@@ -237,7 +237,7 @@ function axisHTML(){return '<div class="axis">'+[540,720,780,960,1080].map(m=>'<
 function badge(info){
  const z=info.segs.filter(g=>g.inP.length===0), o=info.segs.filter(g=>g.inP.length===1);
  if(z.length) return '<span class="badge zero">모두 부재 '+z.map(g=>hm(g.a)+'~'+hm(g.b)).join(", ")+'</span>';
- if(o.length) return '<span class="badge one">1명 근무 '+o.map(g=>hm(g.a)+'~'+hm(g.b)+' '+NM(g.inP[0])).join(", ")+'</span>';
+ if(o.length) return '<span class="badge one">'+o.map(g=>hm(g.a)+'~'+hm(g.b)+' '+NM(g.inP[0])+' 혼자 근무').join(", ")+'</span>';
  const any=PEOPLE.some(p=>info.away[p].length);
  return any?'<span class="badge ok">근무 OK</span>':'';
 }
@@ -278,7 +278,7 @@ function render(){
    if(g.inP.length<=1) al.push({s,g});
   });
  }
- $("alerts").innerHTML=al.length?al.map(x=>'<div class="al '+(x.g.inP.length?'one':'zero')+'" data-go="'+x.s+'"><span class="tag">'+(x.g.inP.length?'1명 근무':'모두 부재')+'</span><b>'+md(x.s)+'</b> '+hm(x.g.a)+'~'+hm(x.g.b)+(x.g.inP.length?' · '+NM(x.g.inP[0])+' 근무':' · 모두 부재')+'</div>').join(""):'<div class="none">앞으로 8주 동안 1명 이하로 남는 시간 없음 👍</div>';
+ $("alerts").innerHTML=al.length?al.map(x=>'<div class="al '+(x.g.inP.length?'one':'zero')+'" data-go="'+x.s+'"><span class="tag">'+(x.g.inP.length?'혼자':'모두 부재')+'</span><b>'+md(x.s)+'</b> '+hm(x.g.a)+'~'+hm(x.g.b)+(x.g.inP.length?' · <b>'+NM(x.g.inP[0])+'</b> 혼자 근무':' · 아무도 없음')+'</div>').join(""):'<div class="none">앞으로 8주 동안 혼자 근무하는 시간 없음 👍</div>';
  // 월별 달력
  renderCal(today);
  // 미정
