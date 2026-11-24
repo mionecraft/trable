@@ -93,6 +93,16 @@ textarea{font:inherit;font-size:14px;width:100%;padding:8px;border:2px solid var
 .pk.on{background:var(--navy);border-color:var(--navy);color:#fff}.pk.dis{opacity:.3;cursor:default}
 .pk.has::after{content:"";position:absolute;right:4px;top:4px;width:7px;height:7px;border-radius:50%;background:#f08c00}
 .pk.hol{color:var(--red)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;display:flex;background:#fff;border-top:2px solid var(--navy);z-index:40;padding-bottom:env(safe-area-inset-bottom)}
+.tabbar button{flex:1;border:0;background:#fff;padding:7px 0 8px;font-size:18px;cursor:pointer;color:var(--mut)}
+.tabbar button b{display:block;font-size:12px;margin-top:1px}
+.tabbar button.on{color:var(--navy);background:#e6f0fb}
+.tab{display:none}.tab.on{display:block}
+.seg2{display:flex;gap:6px;margin-bottom:10px}.seg2 .chip{flex:1;font-size:15px;padding:9px}
+.gapw{display:none;background:var(--redbg);border:2px solid var(--red);border-radius:12px;padding:8px 10px;font-size:14px;color:#8a1216}
+.gapw.show{display:block}.gapw b{color:#c4282d}
+.sl{width:64px;font-size:13px;flex-shrink:0}
+.wrap{padding-bottom:90px}
 .cal{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
 .cal .wh{text-align:center;font-size:12px;font-weight:800;color:var(--mut)}
 .cell{min-height:74px;border:2px solid var(--line);border-radius:10px;padding:3px;cursor:pointer;background:#fff;display:flex;flex-direction:column;gap:2px;overflow:hidden}
@@ -114,61 +124,110 @@ textarea{font:inherit;font-size:14px;width:100%;padding:8px;border:2px solid var
 </head>
 <body>
 <div class="wrap">
-<header><h1 id="teamTitle">독서지원팀 일정보드</h1><div class="sync" id="sync">불러오는 중…</div></header>
+<header><h1 id="teamTitle">팀 일정보드</h1><div class="sync" id="sync">불러오는 중…</div></header>
 
-<div class="grid2">
- <section class="card"><h2 id="todayTitle">오늘</h2><div id="callnow"></div><div class="now" id="now"></div><div id="todayDay"></div></section>
- <section class="card"><h2>⚠ 근무 인원 주의</h2><div class="hint" style="margin:-6px 0 8px">근무시간에 1명 이하로 남는 때 (빨강 = 혼자, 진한 빨강 = 아무도 없음)</div><div class="alerts" id="alerts"></div></section>
-</div>
-<div style="height:14px"></div>
-
-<section class="card"><div class="mhead"><button class="nav" id="prevM">◀</button><h2 id="mTitle"></h2><button class="nav" id="nextM">▶</button></div>
-<div class="cal" id="cal"></div>
-<div class="legend">칸 색: <i class="lo"></i>혼자 근무 <i class="lz"></i>모두 부재 · 이름 = 그날 자리 비우는 사람</div>
-<div id="days"></div></section>
-
-<section class="card"><h2>쪽지 붙여넣어 한 번에 넣기</h2>
-<textarea id="pasteTxt" rows="4" placeholder="평소 쪽지 그대로 붙여넣으세요. 예)&#10;은우 24일 연가&#10;가인 11/26~28 교육&#10;지숙 25일 14시~16시 외출, 27일 오후반차&#10;팀장님 다음주 월요일 출장"></textarea>
-<button class="save" id="parseBtn" style="width:100%;margin-top:8px">읽어서 미리보기</button>
-<div id="pasteOut"></div></section>
-
-<section class="card" id="formCard"><h2>일정 넣기</h2>
-<div class="form">
- <div class="row"><label>이름</label><div id="fWho" class="row"></div></div>
- <div class="row"><label>날짜</label><span id="rangeBox" class="row"><input type="date" id="fFrom"> ~ <input type="date" id="fTo"><span class="hint">하루면 뒤 칸 비움</span></span><button type="button" class="chip" id="multiBtn">📅 여러 날 골라 넣기</button></div>
- <div id="pickBox" style="display:none"></div>
- <div id="fExist" class="exist"></div>
- <div class="row"><label>종류</label><div id="fKind" class="row"></div></div>
- <div class="row" id="repRow"><label>반복</label><div id="fRep" class="row"></div><span class="hint">요일 고르면 매주 반복 (날짜 = 시작~끝, 끝 비우면 계속)</span></div>
- <div class="row"><label>시간</label><div id="fMode" class="row"></div></div>
- <div class="row" id="timeRow"><label></label><select id="fT1"></select> ~ <select id="fT2"></select><span class="hint" id="timeHint"></span></div>
- <div class="row"><label>메모</label><input type="text" id="fMemo" placeholder="(선택)"></div>
- <div class="row" id="undRow"><label></label><label style="width:auto;font-weight:600;font-size:13px"><input type="checkbox" id="fUndated"> 날짜 아직 미정</label></div>
- <button class="save" id="saveBtn">저장 (팀 모두에게 바로 보임)</button>
- <div class="row" id="editBtns" style="display:none;gap:8px">
-  <button type="button" class="more" id="skipDayBtn" style="flex:1;margin:0;border-color:#e8a200;color:#8a5f00">이 날만 지우기</button>
-  <button type="button" class="more" id="delEditBtn" style="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff">이 일정 삭제</button>
+<!-- 처음 온 사람: 우리 팀 보드 만들기 -->
+<section class="card" id="welcome" style="display:none">
+ <h2>우리 팀 일정보드 만들기</h2>
+ <p style="margin:0 0 10px;font-size:14px">근무시간에 <b>전화 받을 사람이 남는지</b> 한눈에 보는 팀 일정판입니다. 연가·출장·교육·육아시간을 넣으면 <b style="color:#c4282d">혼자 근무·아무도 없는 시간</b>을 빨갛게 알려 주고, 넣기 전에 미리 경고해 줍니다. 회원가입 없이 1분이면 만듭니다.</p>
+ <div class="form">
+  <div class="row"><label>팀 이름</label><input type="text" id="wTeam" placeholder="예: 독서지원팀"></div>
+  <div class="row" style="align-items:flex-start"><label>팀원</label><textarea id="wPeople" rows="3" placeholder="한 줄에 한 명 (또는 쉼표로)&#10;예: 김민지, 박서준, 이하늘"></textarea></div>
+  <div class="row"><label>근무시간</label><select id="wDS"></select> ~ <select id="wDE"></select></div>
+  <div class="row"><label>팀 암호</label><input type="text" id="wPw" placeholder="4글자 이상 · 팀원끼리만 공유"></div>
+  <p class="hint" style="margin:0">일정은 팀 암호로 잠가서(암호화) 저장합니다. 암호를 모르면 링크가 있어도 내용을 볼 수 없고, 만든 사람도 암호를 되찾아 줄 수 없습니다.</p>
+  <button class="save" id="wMake">우리 팀 보드 만들기</button>
  </div>
- <button type="button" class="more" id="cancelEdit" style="display:none" onclick="endEdit()">수정 취소</button>
-</div></section>
+</section>
 
-<section class="card"><h2>날짜 미정 일정</h2><ul class="undated" id="undated"></ul></section>
+<!-- 암호 묻기 -->
+<section class="card" id="pwBox" style="display:none">
+ <h2>🔒 팀 암호를 넣어 주세요</h2>
+ <p class="hint" id="pwMsg" style="margin:0 0 8px">이 일정보드는 팀 암호로 잠겨 있습니다.</p>
+ <div class="row"><input type="password" id="pwIn" placeholder="팀 암호"><button class="chip on" id="pwGo">열기</button></div>
+</section>
 
-<section class="card ppl"><details><summary style="cursor:pointer"><b style="font-size:16px;color:var(--navy)">⚙ 팀 이름·팀원 관리</b> <span class="hint">이름 바꾸기 · 사람 추가</span></summary>
-<div class="prow" style="margin-top:10px"><b style="width:56px;font-size:13px">팀 이름</b><input type="text" id="teamName"><button type="button" class="chip" id="teamSave">저장</button></div>
-<div class="hint" style="margin:10px 0 2px">팀원 (앞 칸 = 실제 이름, 뒤 칸 = 화면에 부를 이름. 예: 팀장님)</div>
-<div id="pplList"></div>
-<div class="prow"><input type="text" id="newName" placeholder="새 팀원 이름"><input type="text" id="newLabel" placeholder="부를 이름(선택)"><button type="button" class="chip" id="addPpl">+ 추가</button></div>
-<p class="hint">이름을 바꾸면 그 사람의 일정도 새 이름으로 같이 옮겨집니다. 쪽지 붙여넣기에서는 성 뺀 이름(은우)·부를 이름(팀장님)도 알아봅니다.</p></details></section>
-<p class="hint" style="text-align:center">근무시간 9:00~18:00 기준 · 막대를 누르면 수정·그날만 지우기 · 30초마다 자동 새로고침</p>
+<div id="app" style="display:none">
+<!-- ① 오늘 -->
+<div class="tab" data-tab="today">
+ <div class="grid2">
+  <section class="card"><h2 id="todayTitle">오늘</h2><div id="callnow"></div><div class="now" id="now"></div><div id="todayDay"></div></section>
+  <section class="card"><h2>⚠ 근무 인원 주의</h2><div class="hint" id="alHint" style="margin:-6px 0 8px"></div><div class="alerts" id="alerts"></div></section>
+ </div>
 </div>
+
+<!-- ② 달력 -->
+<div class="tab" data-tab="cal">
+ <section class="card"><div class="mhead"><button class="nav" id="prevM">◀</button><h2 id="mTitle"></h2><button class="nav" id="nextM">▶</button></div>
+ <div class="cal" id="cal"></div>
+ <div class="legend">칸 색: <i class="lo"></i>인원 부족(혼자 등) <i class="lz"></i>아무도 없음 · 이름 = 그날 자리 비우는 사람</div>
+ <div id="days"></div>
+ <button type="button" class="more" id="addThisDay" style="display:none">+ 이 날 일정 넣기</button></section>
+ <section class="card"><h2>날짜 미정 일정</h2><ul class="undated" id="undated"></ul></section>
+</div>
+
+<!-- ③ 일정 넣기 -->
+<div class="tab" data-tab="add">
+ <div class="seg2"><button type="button" class="chip on" data-sub="paste">📋 쪽지로 넣기</button><button type="button" class="chip" data-sub="form">✏ 직접 넣기</button></div>
+ <section class="card sub" data-subp="paste"><h2>쪽지 붙여넣어 한 번에 넣기</h2>
+ <textarea id="pasteTxt" rows="5" placeholder="평소 쪽지 그대로 붙여넣으세요. 예)&#10;은우 24일 연가&#10;가인 11/26~28 교육&#10;지숙 25일 14시~16시 외출, 27일 오후반차&#10;팀장님 다음주 월요일 출장"></textarea>
+ <button class="save" id="parseBtn" style="width:100%;margin-top:8px">읽어서 미리보기</button>
+ <div id="pasteOut"></div></section>
+
+ <section class="card sub" data-subp="form" id="formCard" style="display:none"><h2>일정 넣기</h2>
+ <div class="form">
+  <div class="row"><label>이름</label><div id="fWho" class="row"></div></div>
+  <div class="row"><label>날짜</label><span id="rangeBox" class="row"><input type="date" id="fFrom"> ~ <input type="date" id="fTo"><span class="hint">하루면 뒤 칸 비움</span></span><button type="button" class="chip" id="multiBtn">📅 여러 날 골라 넣기</button></div>
+  <div id="pickBox" style="display:none"></div>
+  <div id="fExist" class="exist"></div>
+  <div class="row"><label>종류</label><div id="fKind" class="row"></div></div>
+  <div class="row" id="repRow"><label>반복</label><div id="fRep" class="row"></div><span class="hint">요일 고르면 매주 반복 (날짜 = 시작~끝, 끝 비우면 계속)</span></div>
+  <div class="row"><label>시간</label><div id="fMode" class="row"></div></div>
+  <div class="row" id="timeRow"><label></label><select id="fT1"></select> ~ <select id="fT2"></select><span class="hint" id="timeHint"></span></div>
+  <div class="row"><label>메모</label><input type="text" id="fMemo" placeholder="(선택)"></div>
+  <div class="row" id="undRow"><label></label><label style="width:auto;font-weight:600;font-size:13px"><input type="checkbox" id="fUndated"> 날짜 아직 미정</label></div>
+  <div class="gapw" id="fWarn"></div>
+  <button class="save" id="saveBtn">저장 (팀 모두에게 바로 보임)</button>
+  <div class="row" id="editBtns" style="display:none;gap:8px">
+   <button type="button" class="more" id="skipDayBtn" style="flex:1;margin:0;border-color:#e8a200;color:#8a5f00">이 날만 지우기</button>
+   <button type="button" class="more" id="delEditBtn" style="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff">이 일정 삭제</button>
+  </div>
+  <button type="button" class="more" id="cancelEdit" style="display:none" onclick="endEdit()">수정 취소</button>
+ </div></section>
+</div>
+
+<!-- ④ 설정 -->
+<div class="tab ppl" data-tab="set">
+ <section class="card"><h2>팀 이름·근무 기준</h2>
+  <div class="prow"><b class="sl">팀 이름</b><input type="text" id="teamName"><button type="button" class="chip" id="teamSave">저장</button></div>
+  <div class="prow"><b class="sl">근무시간</b><select id="cDS"></select> ~ <select id="cDE"></select></div>
+  <div class="prow"><b class="sl">최소 인원</b><select id="cMin"><option value="1">1명 (아무도 없을 때만 경고)</option><option value="2">2명 (혼자 남으면 경고)</option><option value="3">3명</option><option value="4">4명</option></select></div>
+  <button type="button" class="chip" id="cfgSave">근무 기준 저장</button>
+ </section>
+ <section class="card"><h2>팀원</h2>
+  <div class="hint" style="margin:0 0 2px">앞 칸 = 실제 이름, 뒤 칸 = 화면에 부를 이름(예: 팀장님)</div>
+  <div id="pplList"></div>
+  <div class="prow"><input type="text" id="newName" placeholder="새 팀원 이름"><input type="text" id="newLabel" placeholder="부를 이름(선택)"><button type="button" class="chip" id="addPpl">+ 추가</button></div>
+  <p class="hint">이름을 바꾸면 그 사람의 일정도 새 이름으로 같이 옮겨집니다. 쪽지에서는 성 뺀 이름(은우)·부를 이름(팀장님)도 알아봅니다.</p>
+ </section>
+ <section class="card"><h2>팀원 초대·보안</h2><div id="secBox"></div></section>
+ <p class="hint" style="text-align:center">막대를 누르면 수정·그날만 지우기 · 30초마다 자동 새로고침 · <a href="https://mionecraft.github.io/trable/board/" style="color:inherit">새 팀 보드 만들기</a></p>
+</div>
+</div>
+</div>
+<nav class="tabbar" id="tabbar" style="display:none"><button data-go-tab="today">🏠<b>오늘</b></button><button data-go-tab="cal">📅<b>달력</b></button><button data-go-tab="add">✏<b>일정 넣기</b></button><button data-go-tab="set">⚙<b>설정</b></button></nav>
 
 <div class="pop" id="pop"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
 // ===== 설정 =====
-const API="https://api.npoint.io/9e4cd48123e5dd28804d";
+// 우리 팀(/team/ 주소)은 원래 쓰던 칸, 공개용(/board/)은 팀마다 새 칸(?b=칸번호)
+const OUR_BIN="9e4cd48123e5dd28804d";
+const QS=new URLSearchParams(location.search);
+let BIN=QS.get("b")||(/\/team\/?(index\.html)?$/.test(location.pathname)?OUR_BIN:null);
+let API=BIN?"https://api.npoint.io/"+BIN:null;
+const LS=k=>"teamboard"+(BIN===OUR_BIN?"":"_"+BIN)+(k?"_"+k:"");
 // 팀원·팀 이름은 저장소(DB.people, DB.team)에 둠 → 앱 안에서 바꾸기·추가
 const DEF_TEAM="독서지원팀";
 const DEF_PEOPLE=[{id:"p1",name:"전선숙",label:"팀장님"},{id:"p2",name:"박지숙"},{id:"p3",name:"이은우"},{id:"p4",name:"손가인"}];
@@ -178,11 +237,12 @@ function setPeople(db){
  PPL=(db&&Array.isArray(db.people)&&db.people.length)?db.people:DEF_PEOPLE.map(o=>({...o}));
  PPL.forEach((p,i)=>{if(!p.id)p.id="p"+(i+1)});
  PEOPLE=PPL.map(p=>p.name); TEAM=(db&&db.team)||DEF_TEAM;
- const sig=JSON.stringify([TEAM,PPL]); if(sig!==pplSig){pplSig=sig; peopleChanged();}
+ const sig=JSON.stringify([TEAM,PPL,DS,DE,MIN]); if(sig!==pplSig){pplSig=sig; peopleChanged();}
 }
 const KINDS=["연가","반차","대체휴무","특별휴가","대휴·특휴","공가","병가","교육","출장","육아시간","외출","기타"];
 const COLOR={"연가":"#4c6ef5","반차":"#748ffc","대체휴무":"#7048e8","특별휴가":"#ae3ec9","대휴·특휴":"#9c36b5","공가":"#1098ad","병가":"#868e96","교육":"#f08c00","출장":"#e8590c","육아시간":"#2b8a3e","외출":"#0ca678","기타":"#495057"};
-const DS=540, DE=1080; // 9:00~18:00 (분)
+let DS=540, DE=1080, MIN=2; // 근무시간(분)·최소 인원 — 설정에서 바꿈
+const FULL=[[0,1440]]; // 종일
 // 평일 공휴일 (우주항공청 2027 월력요항 기준. 선거일·임시공휴일 생기면 추가)
 const HOL={"2026-12-25":"성탄절","2027-01-01":"신정","2027-02-08":"설 연휴","2027-02-09":"대체공휴일(설)","2027-03-01":"삼일절","2027-05-03":"대체공휴일(노동절)","2027-05-05":"어린이날","2027-05-13":"부처님오신날","2027-08-16":"대체공휴일(광복절)","2027-09-14":"추석 연휴","2027-09-15":"추석","2027-09-16":"추석 연휴","2027-10-04":"대체공휴일(개천절)","2027-10-11":"대체공휴일(한글날)","2027-12-27":"대체공휴일(성탄절)"};
 const WD="일월화수목금토";
@@ -209,7 +269,7 @@ function itemsOn(items,s){
 function dayInfo(items,s){
  const list=itemsOn(items,s);
  const away={}; PEOPLE.forEach(p=>away[p]=[]);
- list.forEach(it=>it.ranges.forEach(r=>{ if(away[it.who]) away[it.who].push({a:Math.max(DS,r[0]),b:Math.min(DE,r[1]),it}); }));
+ list.forEach(it=>it.ranges.map(r=>(r[0]<=540&&r[1]>=1080)?[0,1440]:r).forEach(r=>{ if(away[it.who]) away[it.who].push({a:Math.max(DS,r[0]),b:Math.min(DE,r[1]),it}); }));
  // 하루 종일 비는 일정이 있으면 그날은 그것만 (반복 육아시간 등은 숨김)
  PEOPLE.forEach(p=>{ const f=away[p].filter(x=>x.a<=DS&&x.b>=DE); if(f.length) away[p]=[f[f.length-1]]; });
  // 시간 경계마다 근무 인원 계산
@@ -226,34 +286,43 @@ function dayInfo(items,s){
  return {away,segs};
 }
 
-// ===== 저장소 =====
-let DB={items:[]}, online=false;
+// ===== 저장소 (팀 암호가 있으면 암호화해서 저장) =====
+let DB={items:[]}, online=false, KEY=null, ENC=false, BAD=false;
+const b64=u=>btoa(String.fromCharCode(...u)), unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+async function mkKey(pw){ const e=new TextEncoder(); const base=await crypto.subtle.importKey("raw",e.encode(pw),"PBKDF2",false,["deriveKey"]);
+ return crypto.subtle.deriveKey({name:"PBKDF2",salt:e.encode("teamboard:"+BIN),iterations:150000,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]); }
+async function seal(o){ if(!KEY) return o; const iv=crypto.getRandomValues(new Uint8Array(12));
+ const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},KEY,new TextEncoder().encode(JSON.stringify(o)))); return {v:1,enc:b64(iv)+"."+b64(ct)}; }
+async function unseal(j){ if(!j||!j.enc){ENC=false; return (j&&j.items)?j:{items:[]};} ENC=true;
+ if(!KEY){const e=new Error("NEEDPW"); throw e;}
+ try{ const [iv,ct]=j.enc.split(".").map(unb64); return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv},KEY,ct))); }
+ catch(e){ throw new Error("BADPW"); } }
+async function getRemote(){ const r=await fetch(API+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) throw new Error("불러오기 실패"); return unseal(await r.json()); }
+async function putRemote(db){ const w=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(await seal(db))}); if(!w.ok) throw new Error("저장 실패"); }
+function applyCfg(db){ const c=(db&&db.cfg)||{}; const ds=c.ds||540, de=c.de||1080, mn=c.min||2; const ch=ds!==DS||de!==DE; DS=ds; DE=de; MIN=mn; if(ch) buildTimeOpts(); }
 async function load(){
  try{
-  const r=await fetch(API+"?t="+Date.now(),{cache:"no-store"});
-  if(!r.ok) throw 0;
-  const j=await r.json(); DB=(j&&j.items)?j:{items:[]}; online=true; setPeople(DB);
-  try{localStorage.setItem("teamboard",JSON.stringify(DB))}catch(e){}
+  DB=await getRemote(); online=true; BAD=false; applyCfg(DB); setPeople(DB);
+  try{localStorage.setItem(LS(),JSON.stringify(DB))}catch(e){}
  }catch(e){
-  online=false; try{const c=localStorage.getItem("teamboard"); if(c) DB=JSON.parse(c)}catch(e2){} setPeople(DB);
+  if(e.message==="NEEDPW"||e.message==="BADPW"){ return askPw(e.message==="BADPW"?"암호가 맞지 않습니다. 다시 넣어 주세요.":""); }
+  online=false; try{const c=localStorage.getItem(LS()); if(c) DB=JSON.parse(c)}catch(e2){} applyCfg(DB); setPeople(DB);
  }
- render(); if(!editId) syncExisting();
+ showApp(); render(); if(!editId) syncExisting();
 }
 // 저장 직전에 최신본을 다시 받아서 내 변경만 얹음 → 동시에 고쳐도 남의 입력이 안 지워짐
 async function mutate(fn){
- const r=await fetch(API+"?t="+Date.now(),{cache:"no-store"});
- if(!r.ok) throw new Error("불러오기 실패");
- const cur=await r.json(); const db=(cur&&cur.items)?cur:{items:[]};
+ const db=await getRemote();
  if(!Array.isArray(db.people)||!db.people.length) db.people=PPL.map(o=>({...o}));
  if(!db.team) db.team=TEAM;
+ if(!Array.isArray(db.items)) db.items=[];
  fn(db);
  // 이미 끝난 일정(반복 아닌 것)은 저장소에서 지움
  const t=ymd(new Date());
  db.items=db.items.filter(it=>!it.from||(it.rep&&it.rep.length)||(it.to||it.from)>=t);
  db.items.forEach(it=>{ if(it.skip) it.skip=it.skip.filter(d=>d>=t) });
- const w=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(db)});
- if(!w.ok) throw new Error("저장 실패");
- DB=db; online=true; setPeople(db); render();
+ await putRemote(db);
+ DB=db; online=true; applyCfg(db); setPeople(db); try{localStorage.setItem(LS(),JSON.stringify(DB))}catch(e){} render();
 }
 
 // ===== 그리기 =====
@@ -269,17 +338,19 @@ function laneHTML(p,info,s){
  });
  return h+'</div></div>';
 }
-function ticks(){return [600,660,720,780,840,900,960,1020].map(m=>'<div class="tick" style="left:'+pct(m)+'%"></div>').join("")}
+function ticks(){const t=[];for(let m=Math.ceil((DS+1)/60)*60;m<DE;m+=60)t.push(m);return t.map(m=>'<div class="tick" style="left:'+pct(m)+'%"></div>').join("")}
 function covHTML(info){
  let h='<div class="lane cov"><div class="nm" style="color:#7a869c">인원</div><div class="bar">';
- info.segs.forEach(g=>h+='<div class="seg s'+g.inP.length+'" style="left:'+pct(g.a)+'%;width:'+(pct(g.b)-pct(g.a))+'%" title="'+hm(g.a)+'~'+hm(g.b)+' '+g.inP.length+'명"></div>');
+ info.segs.forEach(g=>h+='<div class="seg '+segCls(g.inP.length)+'" style="left:'+pct(g.a)+'%;width:'+(pct(g.b)-pct(g.a))+'%" title="'+hm(g.a)+'~'+hm(g.b)+' '+g.inP.length+'명"></div>');
  return h+'</div></div>';
 }
-function axisHTML(){return '<div class="axis">'+[540,720,780,960,1080].map(m=>'<span style="left:'+pct(m)+'%">'+(m/60)+'시</span>').join("")+'</div>'}
+function axisHTML(){const t=[DS];for(let m=Math.ceil((DS+1)/180)*180;m<DE-60;m+=180)if(m-DS>=90)t.push(m);t.push(DE);return '<div class="axis">'+t.map(m=>'<span style="left:'+pct(m)+'%">'+hm(m).replace(":00","")+'시</span>').join("")+'</div>'}
+const segCls=n=>n===0?'s0':n<MIN?'s1':'s'+Math.max(2,Math.min(n,4));
+const lowTxt=g=>g.inP.length===0?'아무도 없음':g.inP.length===1?NM(g.inP[0])+' 혼자':g.inP.map(NM).join('·')+'만 ('+g.inP.length+'명)';
 function badge(info){
- const z=info.segs.filter(g=>g.inP.length===0), o=info.segs.filter(g=>g.inP.length===1);
- if(z.length) return '<span class="badge zero">모두 부재 '+z.map(g=>hm(g.a)+'~'+hm(g.b)).join(", ")+'</span>';
- if(o.length) return '<span class="badge one">⚠ '+o.map(g=>hm(g.a)+'~'+hm(g.b)+' '+NM(g.inP[0])+' 혼자').join(", ")+'</span>';
+ const z=info.segs.filter(g=>g.inP.length===0), o=info.segs.filter(g=>g.inP.length>0&&g.inP.length<MIN);
+ if(z.length) return '<span class="badge zero">⚠ 아무도 없음 '+z.map(g=>hm(g.a)+'~'+hm(g.b)).join(", ")+'</span>';
+ if(o.length) return '<span class="badge one">⚠ '+o.map(g=>hm(g.a)+'~'+hm(g.b)+' '+lowTxt(g)).join(", ")+'</span>';
  const any=PEOPLE.some(p=>info.away[p].length);
  return any?'<span class="badge ok">근무 OK</span>':'';
 }
@@ -306,8 +377,8 @@ function render(){
   }).join("");
   const seg=info.segs.find(g=>g.a<=t&&t<g.b)||{inP:PEOPLE};
   const n=seg.inP.length;
-  $("callnow").className="callnow "+(n===0?"zero":n===1?"one":"ok");
-  $("callnow").textContent=(inWork?"지금 ":"근무시간 아님 · 9시 기준 ")+(n===0?"⚠ 모두 부재 — 전화 받을 사람 없음":n===1?"⚠ 혼자 근무: "+NM(seg.inP[0]):"근무 중: "+seg.inP.map(NM).join(", ")+(n>1?" ("+n+"명)":""));
+  $("callnow").className="callnow "+(n===0?"zero":n<MIN?"one":"ok");
+  $("callnow").textContent=(inWork?"지금 ":"근무시간 아님 · "+hm(DS)+" 기준 ")+(n===0?"⚠ 아무도 없음 — 전화 받을 사람 없음":n<MIN?"⚠ 인원 부족: "+lowTxt(seg):"근무 중: "+seg.inP.map(NM).join(", ")+(n>=MIN&&n>1?" ("+n+"명)":""));
   $("todayDay").innerHTML=dayHTML(today,false).replace('<div class="dhead">','<div class="dhead" style="display:none">');
  }else{
   $("now").innerHTML=""; $("callnow").className="callnow ok"; $("callnow").textContent=(HOL[today]||"주말")+" — 근무일 아님"; $("todayDay").innerHTML="";
@@ -320,10 +391,11 @@ function render(){
   const s=ymd(d); if(!isWork(s)) continue;
   dayInfo(DB.items,s).segs.forEach(g=>{
    if(s===today&&g.b<=mins) return;
-   if(g.inP.length<=1) al.push({s,g});
+   if(g.inP.length<MIN) al.push({s,g});
   });
  }
- $("alerts").innerHTML=al.length?al.map(x=>'<div class="al '+(x.g.inP.length?'one':'zero')+'" data-go="'+x.s+'"><span class="tag">'+(x.g.inP.length?'⚠ 1명':'⚠ 0명')+'</span><b>'+md(x.s)+'</b> '+hm(x.g.a)+'~'+hm(x.g.b)+(x.g.inP.length?' · <b>'+NM(x.g.inP[0])+'</b> 혼자 근무':' · 아무도 없음')+'</div>').join(""):'<div class="none">항상 2명 이상 근무 👍</div>';
+ $("alerts").innerHTML=al.length?al.map(x=>'<div class="al '+(x.g.inP.length?'one':'zero')+'" data-go="'+x.s+'"><span class="tag">⚠ '+x.g.inP.length+'명</span><b>'+md(x.s)+'</b> '+hm(x.g.a)+'~'+hm(x.g.b)+' · <b>'+lowTxt(x.g)+'</b></div>').join(""):'<div class="none">항상 '+MIN+'명 이상 근무 👍</div>';
+ $("alHint").textContent="근무시간("+hm(DS)+"~"+hm(DE)+")에 "+(MIN>1?(MIN-1)+"명 이하로":"아무도 없이")+" 남는 때 · 누르면 달력으로";
  // 월별 달력
  renderCal(today);
  // 미정
@@ -348,7 +420,7 @@ function renderCal(today){
   if(HOL[s]){cells.push({s,h:'<div class="cell hol"><span class="n">'+d+'</span><span class="hn">'+HOL[s]+'</span></div>'});continue;}
   if(s<today){cells.push({s,h:'<div class="cell past"><span class="n">'+d+'</span></div>'});continue;}
   const info=dayInfo(DB.items,s);
-  const z=info.segs.some(g=>g.inP.length===0), o=info.segs.some(g=>g.inP.length===1);
+  const z=info.segs.some(g=>g.inP.length===0), o=info.segs.some(g=>g.inP.length>0&&g.inP.length<MIN);
   let chips="";
   PEOPLE.forEach(p=>{const a=info.away[p]; if(!a.length) return;
    const full=a.some(x=>x.a===DS&&x.b===DE);
@@ -358,6 +430,7 @@ function renderCal(today){
  // 다 지나간 주는 줄째로 뺌
  for(let i=0;i<cells.length;i+=5){const wk=cells.slice(i,i+5); if(wk.some(c=>c.s&&c.s>=today)) h+=wk.map(c=>c.h).join("");}
  $("cal").innerHTML=h;
+ $("addThisDay").style.display=selDay?"block":"none";
  $("days").innerHTML=selDay?dayHTML(selDay,selDay===today):'<div class="none" style="margin-top:8px">날짜를 누르면 그날 시간표가 여기 나옵니다</div>';
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -368,7 +441,7 @@ document.addEventListener("click",e=>{
  const c=e.target.closest("[data-day]"); if(c){selDay=c.dataset.day; if(F.multi){togglePick(selDay)} else linkForm(selDay); render();return;}
  const ed=e.target.closest("[data-edit]"); if(ed){const it=DB.items.find(x=>x.id===ed.dataset.edit); if(it){startEdit(it,true); syncExisting();} return;}
  const nw=e.target.closest("[data-newitem]"); if(nw){endEdit(); $("fExist").innerHTML='<b>'+NM(F.who)+' · '+md(pickDay||$("fFrom").value)+'</b> — 새 일정 넣는 중'; return;}
- const g=e.target.closest("[data-go]"); if(g){selDay=g.dataset.go;linkForm(selDay);const d=parse(selDay);calY=d.getFullYear();calM=d.getMonth();render();$("cal").scrollIntoView({behavior:"smooth",block:"start"});return;}
+ const g=e.target.closest("[data-go]"); if(g){selDay=g.dataset.go;linkForm(selDay);const d=parse(selDay);calY=d.getFullYear();calM=d.getMonth();render();goTab("cal");$("cal").scrollIntoView({behavior:"smooth",block:"start"});return;}
  const x=e.target.closest("[data-del]"); if(x) return delItem(x.dataset.del);
  if(e.target.id==="pop") closePop();
 });
@@ -403,12 +476,13 @@ function chips(el,arr,key,multi,label){
  $(el).onclick=e=>{const b=e.target.closest(".chip"); if(!b) return; let v=b.dataset.v; if(key==="rep") v=+v;
   if(multi){const i=F[key].indexOf(v); i<0?F[key].push(v):F[key].splice(i,1)} else F[key]=v;
   if(key==="kind"&&v==="육아시간"&&F.mode==="full"){F.mode="work";paint("fMode","mode");}
-  if(key==="who") try{localStorage.setItem("teamboard_me",v)}catch(e){}
+  if(key==="who") try{localStorage.setItem(LS("me"),v)}catch(e){}
   if(key==="who"){ if(editId) endEdit(); setTimeout(syncExisting,0); if(F.multi) setTimeout(renderPick,0); }
   paint(el,key); timeUI();};
 }
 function paint(el,key){[...$(el).children].forEach(b=>{let v=b.dataset.v; if(key==="rep") v=+v; b.classList.toggle("on",Array.isArray(F[key])?F[key].includes(v):F[key]===v)})}
 function timeUI(){
+ setTimeout(updWarn,0);
  $("timeRow").style.display=F.mode==="full"?"none":"flex";
  $("timeHint").textContent=F.mode==="work"?"이 시간만 근무 (앞뒤는 자리 비움)":"이 시간 동안 자리 비움";
 }
@@ -417,8 +491,7 @@ function init(){
  chips("fRep",[1,2,3,4,5],"rep",true,v=>WD[v]);
  $("fMode").innerHTML=[["full","종일"],["away","비우는 시간"],["work","근무하는 시간"]].map(x=>'<button type="button" class="chip" data-v="'+x[0]+'">'+x[1]+'</button>').join("");
  $("fMode").onclick=e=>{const b=e.target.closest(".chip"); if(!b) return; F.mode=b.dataset.v; paint("fMode","mode"); timeUI()};
- let o=""; for(let m=DS;m<=DE;m+=30) o+='<option value="'+m+'">'+hm(m)+'</option>';
- $("fT1").innerHTML=o; $("fT2").innerHTML=o; $("fT1").value=DS; $("fT2").value=DE;
+ buildTimeOpts();
  $("fFrom").value=ymd(new Date());
  paint("fMode","mode"); timeUI(); initExtra(); setPeople(null);
  $("saveBtn").onclick=save;
@@ -463,7 +536,7 @@ function startEdit(it,quiet){
  if(multi){ $("skipDayBtn").style.cssText="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff;display:block"; $("delEditBtn").textContent="반복 전체 지우기"; $("delEditBtn").style.cssText="flex:0 0 auto;margin:0;border-color:#c5ccd8;background:#fff;color:#7a869c;font-size:12px;padding:8px 10px"; }
  else { $("delEditBtn").textContent="이 일정 삭제"; $("delEditBtn").style.cssText="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff"; }
  $("formCard").querySelector("h2").textContent="일정 수정 중 — "+NM(it.who)+" "+it.kind+((it.rep&&it.rep.length)?" (매주 반복 · 날짜 칸 = 반복 기간)":"");
- if(!quiet) $("formCard").scrollIntoView({behavior:"smooth",block:"start"});
+ if(!quiet){ goTab("add"); goSub("form"); window.scrollTo(0,0); }
  if(!quiet) syncExisting();
 }
 function endEdit(keep){editId=null; $("editBtns").style.display="none"; if(!keep){} F.kind=null;F.rep=[];F.mode="full";$("fTo").value="";$("fMemo").value=""; if(pickDay){$("fFrom").value=pickDay} ["fKind","fRep","fMode"].forEach((e,i)=>paint(e,["kind","rep","mode"][i])); timeUI();$("saveBtn").textContent="저장 (팀 모두에게 바로 보임)";$("cancelEdit").style.display="none";$("formCard").querySelector("h2").textContent="일정 넣기"}
@@ -476,9 +549,9 @@ async function save(){
  if(!und&&!from) return toast("날짜를 넣으세요");
  if(!und&&to&&to<from) return toast("끝날짜가 시작일보다 빠릅니다");
  const t1=+$("fT1").value,t2=+$("fT2").value;
- let ranges=[[DS,DE]];
+ let ranges=FULL.map(r=>r.slice());
  if(F.mode!=="full"){ if(t2<=t1) return toast("시간을 확인하세요");
-  ranges=F.mode==="away"?[[t1,t2]]:[[DS,t1],[t2,DE]].filter(r=>r[1]>r[0]); }
+  ranges=F.mode==="away"?[[t1,t2]]:[[0,t1],[t2,1440]].filter(r=>r[1]>r[0]); }
  const it={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),who:F.who,kind:F.kind,
   from:und?"":from,to:und?"":(to||""),rep:und?[]:F.rep.slice().sort(),ranges,memo:$("fMemo").value.trim()};
  $("saveBtn").disabled=true;
@@ -491,11 +564,11 @@ async function save(){
 function peopleChanged(){
  $("teamTitle").textContent=TEAM+" 일정보드"; document.title=TEAM+" 일정보드";
  if(F.who&&!PEOPLE.includes(F.who)) F.who=null;
- if(!F.who){ try{const me=localStorage.getItem("teamboard_me"); if(me&&PEOPLE.includes(me)) F.who=me}catch(e){} }
+ if(!F.who){ try{const me=localStorage.getItem(LS("me")); if(me&&PEOPLE.includes(me)) F.who=me}catch(e){} }
  chips("fWho",PEOPLE,"who",false,NM); paint("fWho","who");
  const ae=document.activeElement;
  if(!(ae&&ae.closest&&ae.closest(".ppl"))){
-  $("teamName").value=TEAM;
+  $("teamName").value=TEAM; hourOpts("cDS",DS); hourOpts("cDE",DE); $("cMin").value=String(MIN);
   $("pplList").innerHTML=PPL.map(p=>'<div class="prow" data-pid="'+p.id+'"><input type="text" class="pn" value="'+esc(p.name)+'"><input type="text" class="pl" value="'+esc(p.label||"")+'" placeholder="부를 이름(선택)"><button type="button" class="chip" data-psave="1">저장</button><button type="button" class="x" data-pdel="1">빼기</button></div>').join("");
  }
 }
@@ -515,7 +588,7 @@ function initExtra(){
    if(PPL.some(x=>x.id!==pid&&x.name===n)) return toast("같은 이름이 이미 있습니다");
    let old=p.name;
    try{await mutate(db=>{const t=db.people.find(x=>x.id===pid); if(!t) throw new Error("이미 빠진 사람"); old=t.name; t.name=n; if(l) t.label=l; else delete t.label; db.items.forEach(it=>{if(it.who===old) it.who=n})});
-    if(F.who===old) F.who=n; try{if(localStorage.getItem("teamboard_me")===old) localStorage.setItem("teamboard_me",n)}catch(e2){}
+    if(F.who===old) F.who=n; try{if(localStorage.getItem(LS("me"))===old) localStorage.setItem(LS("me"),n)}catch(e2){}
     document.activeElement&&document.activeElement.blur(); pplSig=""; setPeople(DB); render(); toast(old===n?"저장했습니다":old+" → "+n+" (일정도 같이 옮김)")}catch(e2){toast("저장 안 됨: "+e2.message)}
   }
   if(e.target.closest("[data-pdel]")){
@@ -564,13 +637,13 @@ function renderPick(){
   h+='<button type="button" class="pk'+(dis?' dis':'')+(HOL[s]?' hol':'')+(F.days.includes(s)?' on':'')+(has?' has':'')+'" '+(dis?'':'data-pk="'+s+'"')+'>'+d+'</button>'; }
  h+='</div><div class="hint" style="margin-top:6px">누른 날 = 남색 · 주황 점 = 이미 일정 있는 날 · 위 큰 달력을 눌러도 골라집니다</div>';
  h+='<div style="margin-top:6px;font-size:14px"><b>고른 날 '+F.days.length+'일</b> '+F.days.map(md).join(", ")+(F.days.length?' <button type="button" class="x" data-pclear="1">모두 취소</button>':'')+'</div>';
- $("pickBox").innerHTML=h;
+ $("pickBox").innerHTML=h; updWarn();
 }
 // 이어지는 근무일은 한 덩어리(○~○일)로 저장
 function toRuns(days){ const ds=[...new Set(days)].sort(); const runs=[];
  ds.forEach(s=>{ const r=runs[runs.length-1]; if(r){ let n=addD(parse(r[r.length-1]),1); while(!isWork(ymd(n))&&ymd(n)<s) n=addD(n,1); if(ymd(n)===s){r.push(s);return;} } runs.push([s]); });
  return runs; }
-function curRanges(){ const t1=+$("fT1").value,t2=+$("fT2").value; if(F.mode==="full") return [[DS,DE]]; if(t2<=t1) return null; return F.mode==="away"?[[t1,t2]]:[[DS,t1],[t2,DE]].filter(r=>r[1]>r[0]); }
+function curRanges(){ const t1=+$("fT1").value,t2=+$("fT2").value; if(F.mode==="full") return FULL.map(r=>r.slice()); if(t2<=t1) return null; return F.mode==="away"?[[t1,t2]]:[[0,t1],[t2,1440]].filter(r=>r[1]>r[0]); }
 async function saveMulti(){
  if(!F.who) return toast("이름을 고르세요"); if(!F.kind) return toast("종류를 고르세요");
  if(!F.days.length) return toast("날짜를 눌러 고르세요");
@@ -652,7 +725,7 @@ function parseMemo(txt,baseDate){
   groups.forEach(g=>parseSeg(g.text,ctx,base,today).forEach(x=>g.whos.forEach(w=>rows.push({...x,who:w||"",src:line,warn:x.warn.slice().concat(w?[]:["이름 고르기"])}))));
   const lg=groups[groups.length-1]; if(lg&&lg.whos[lg.whos.length-1]) lastWho=lg.whos[lg.whos.length-1];
  });
- rows.forEach(r=>{ const dup=DB.items.some(x=>x.who===r.who&&x.kind===r.kind&&x.from===r.from&&(x.to||"")===(r.to||"")&&JSON.stringify(x.ranges)===JSON.stringify([[r.t1,r.t2]]));
+ rows.forEach(r=>{ const dup=DB.items.some(x=>x.who===r.who&&x.kind===r.kind&&x.from===r.from&&(x.to||"")===(r.to||"")&&rangeKey(x.ranges)===rangeKey([[r.t1,r.t2]]));
   if(dup) r.warn.push("이미 들어가 있음"); r.on=!!(r.who&&r.kind&&r.from)&&!dup&&!r.warn.some(w=>/확인|고르기/.test(w)); });
  return rows;
 }
@@ -690,6 +763,8 @@ function tOpts(v){ let o="",vs=[]; for(let m=DS;m<=DE;m+=30) vs.push(m); if(!vs.
 function renderPaste(){
  if(!PASTE.length){ $("pasteOut").innerHTML=$("pasteTxt").value.trim()?'<div class="none" style="margin-top:8px">읽은 일정이 없습니다. 이름·날짜·종류(예: 은우 24일 연가)가 들어 있는지 봐 주세요.</div>':''; return; }
  const n=PASTE.filter(r=>r.on).length;
+ const pit=PASTE.filter(r=>r.on&&r.who&&r.kind&&r.from&&r.t2>r.t1).map(r=>({id:"_new",who:r.who,kind:r.kind,from:r.from,to:(r.to&&r.to!==r.from)?r.to:"",rep:r.rep.slice(),ranges:[[r.t1,r.t2]]}));
+ const pw=warnHTML(gapWarn(pit,null));
  $("pasteOut").innerHTML='<div class="hint" style="margin-top:8px">읽은 결과 '+PASTE.length+'건 — 빨간 글씨는 확인 필요. 고치면 자동 체크됩니다.</div>'+PASTE.map((r,i)=>
   '<div class="pr'+(r.on?'':' off')+'"><div class="row"><input type="checkbox" data-i="'+i+'" data-f="on"'+(r.on?' checked':'')+'>'+
   '<select data-i="'+i+'" data-f="who"><option value="">이름?</option>'+PEOPLE.map(p=>'<option value="'+esc(p)+'"'+(p===r.who?' selected':'')+'>'+esc(NM(p))+'</option>').join("")+'</select>'+
@@ -698,19 +773,120 @@ function renderPaste(){
   '<div class="row"><input type="date" data-i="'+i+'" data-f="from" value="'+r.from+'"> ~ <input type="date" data-i="'+i+'" data-f="to" value="'+r.to+'"></div>'+
   '<div class="row"><select data-i="'+i+'" data-f="t1">'+tOpts(r.t1)+'</select> ~ <select data-i="'+i+'" data-f="t2">'+tOpts(r.t2)+'</select><span class="hint">'+(r.t1===DS&&r.t2===DE?'종일':'자리 비움')+'</span></div>'+
   '<div class="src">쪽지: '+esc(r.src)+'</div>'+(r.warn.length?'<div class="wn">⚠ '+r.warn.join(" · ")+'</div>':'')+'</div>').join("")+
-  '<div class="row" style="margin-top:10px"><button type="button" class="save" id="pasteSave" style="flex:1"'+(n?'':' disabled')+'>체크한 '+n+'건 저장</button><button type="button" class="more" id="pasteClear" style="width:auto;margin:0">비우기</button></div>';
+  '<div class="gapw'+(pw?' show':'')+'" style="margin-top:10px">'+pw+'</div><div class="row" style="margin-top:10px"><button type="button" class="save" id="pasteSave" style="flex:1"'+(n?'':' disabled')+'>체크한 '+n+'건 저장</button><button type="button" class="more" id="pasteClear" style="width:auto;margin:0">비우기</button></div>';
 }
 async function savePaste(){
  const sel=PASTE.filter(r=>r.on);
  for(const r of sel){ if(!r.who||!r.kind||!r.from) return toast("이름·종류·날짜가 빈 줄이 있습니다"); if(r.to&&r.to<r.from) return toast("끝날짜가 시작일보다 빠른 줄이 있습니다"); if(r.t2<=r.t1) return toast("시간이 거꾸로 된 줄이 있습니다"); }
- const items=sel.map((r,k)=>({id:Date.now().toString(36)+k+Math.random().toString(36).slice(2,5),who:r.who,kind:r.kind,from:r.from,to:(r.to&&r.to!==r.from)?r.to:"",rep:r.rep.slice(),ranges:[[r.t1,r.t2]],memo:""}));
+ const items=sel.map((r,k)=>({id:Date.now().toString(36)+k+Math.random().toString(36).slice(2,5),who:r.who,kind:r.kind,from:r.from,to:(r.to&&r.to!==r.from)?r.to:"",rep:r.rep.slice(),ranges:(r.t1<=DS&&r.t2>=DE)?FULL.map(x=>x.slice()):[[r.t1,r.t2]],memo:""}));
  try{ await mutate(db=>{db.items.push(...items)}); toast(items.length+"건 저장했습니다"); PASTE=[]; $("pasteTxt").value=""; renderPaste(); }catch(e){toast("저장 안 됨: "+e.message)}
 }
 const _render=render; render=function(){ _render(); if(F.multi) renderPick(); };
 
-init(); load();
-setInterval(()=>{ if(!document.hidden && !$("pop").classList.contains("show")) load() },30000);
-document.addEventListener("visibilitychange",()=>{if(!document.hidden) load()});
+// ===== 근무시간 선택칸 =====
+function buildTimeOpts(){
+ let o=""; for(let m=DS;m<=DE;m+=30) o+='<option value="'+m+'">'+hm(m)+'</option>';
+ const a=+$("fT1").value, b=+$("fT2").value;
+ $("fT1").innerHTML=o; $("fT2").innerHTML=o;
+ $("fT1").value=(a>=DS&&a<=DE)?a:DS; $("fT2").value=(b>=DS&&b<=DE)?b:DE;
+}
+function hourOpts(el,v){ let o=""; for(let m=360;m<=1320;m+=30) o+='<option value="'+m+'"'+(m===v?' selected':'')+'>'+hm(m)+'</option>'; $(el).innerHTML=o; }
+const rangeKey=r=>JSON.stringify((r||[]).map(x=>[Math.max(DS,x[0]),Math.min(DE,x[1])]));
+
+// ===== 저장 전 경고: 이 일정을 넣으면 인원이 모자라는 때 =====
+function gapWarn(newItems,replaceId){
+ const today=ymd(new Date()), base=DB.items.filter(x=>x.id!==replaceId), after=base.concat(newItems), days=new Set();
+ newItems.forEach(it=>{ if(!it.from) return; let end=it.to||((it.rep&&it.rep.length)?ymd(addD(parse(it.from),62)):it.from);
+  if(it.rep&&it.rep.length&&it.to&&it.to>ymd(addD(parse(it.from),62))) end=ymd(addD(parse(it.from),62));
+  for(let d=parse(it.from);ymd(d)<=end;d=addD(d,1)){ const s=ymd(d); if(s>=today&&isWork(s)) days.add(s); } });
+ const out=[];
+ [...days].sort().forEach(s=>{ const A=dayInfo(after,s), B=dayInfo(base,s);
+  A.segs.forEach(g=>{ const n=g.inP.length; if(n>=MIN) return; const mid=(g.a+g.b)/2, bs=B.segs.find(x=>x.a<=mid&&mid<x.b); if(bs&&bs.inP.length<=n) return; out.push({s,g}); }); });
+ return out;
+}
+function warnHTML(w){ if(!w.length) return "";
+ return '<b>⚠ 넣으면 인원이 모자랍니다</b> (저장은 됩니다)<br>'+w.slice(0,5).map(x=>md(x.s)+' '+hm(x.g.a)+'~'+hm(x.g.b)+' — '+lowTxt(x.g)).join('<br>')+(w.length>5?'<br>외 '+(w.length-5)+'건':''); }
+function formItems(){
+ if(!F.who||!F.kind) return null; const ranges=curRanges(); if(!ranges) return null;
+ if(F.multi) return toRuns(F.days).map(r=>({id:"_new",who:F.who,kind:F.kind,from:r[0],to:r.length>1?r[r.length-1]:"",rep:[],ranges}));
+ if($("fUndated").checked) return null; const from=$("fFrom").value, to=$("fTo").value; if(!from||(to&&to<from)) return null;
+ return [{id:"_new",who:F.who,kind:F.kind,from,to:to||"",rep:F.rep.slice(),ranges}];
+}
+function updWarn(){ const box=$("fWarn"); const its=formItems(); const w=its?gapWarn(its,editId):[]; box.innerHTML=warnHTML(w); box.classList.toggle("show",w.length>0); }
+
+// ===== 탭 =====
+let TAB="today";
+function goTab(t){ TAB=t; document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===t)); document.querySelectorAll("[data-go-tab]").forEach(b=>b.classList.toggle("on",b.dataset.goTab===t)); }
+function goSub(v){ document.querySelectorAll("[data-sub]").forEach(b=>b.classList.toggle("on",b.dataset.sub===v)); document.querySelectorAll("[data-subp]").forEach(x=>x.style.display=x.dataset.subp===v?"block":"none"); if(v==="form") updWarn(); }
+function showApp(){ $("welcome").style.display="none"; $("pwBox").style.display="none"; $("app").style.display="block"; $("tabbar").style.display="flex"; }
+
+// ===== 암호 =====
+function askPw(msg){ $("app").style.display="none"; $("tabbar").style.display="none"; $("pwBox").style.display="block"; $("sync").textContent="🔒 잠김"; $("pwMsg").textContent=msg||"이 일정보드는 팀 암호로 잠겨 있습니다. 팀원에게 받은 암호를 넣어 주세요."; }
+async function usePw(pw,remember){ KEY=await mkKey(pw); if(remember) try{localStorage.setItem(LS("pw"),pw)}catch(e){} }
+function inviteLink(){ const pw=(()=>{try{return localStorage.getItem(LS("pw"))||""}catch(e){return ""}})();
+ return location.origin+location.pathname+(BIN===OUR_BIN?"":"?b="+BIN)+(pw?"#k="+encodeURIComponent(pw):""); }
+function renderSec(){
+ const link=inviteLink();
+ let h='<div class="hint" style="margin-bottom:6px">팀원에게 이 링크를 보내면 바로 열립니다'+(ENC?' (암호 포함 — 팀 단톡방에만 보내세요)':'')+'.</div>'+
+  '<div class="row"><input type="text" id="invLink" readonly value="'+esc(link)+'"><button type="button" class="chip" id="invCopy">복사</button></div>';
+ h+=ENC?'<p class="hint">🔒 이 보드는 팀 암호로 잠겨(암호화) 있습니다. 링크만으로는 내용을 볼 수 없습니다.</p>'
+  :'<p class="hint" style="color:#c4282d">⚠ 이 보드는 암호가 없습니다. 저장소 주소를 아는 사람은 일정을 볼 수 있습니다.</p><div class="row"><input type="text" id="setPw" placeholder="새 팀 암호 (4글자 이상)"><button type="button" class="chip" id="setPwBtn">암호 걸기</button></div><p class="hint">암호를 걸면 팀원 모두 새 초대 링크로 다시 열어야 합니다.</p>';
+ h+='<p class="hint">이 기기 저장본: 저장소가 깨지거나 누가 지워도 아래 버튼으로 이 기기에 남은 마지막 내용을 되살릴 수 있습니다.</p><button type="button" class="chip" id="restoreBtn">이 기기 저장본으로 되살리기</button>';
+ $("secBox").innerHTML=h;
+}
+
+// ===== 새 팀 만들기 =====
+async function makeBoard(){
+ const team=$("wTeam").value.trim(), pw=$("wPw").value.trim(), ds=+$("wDS").value, de=+$("wDE").value;
+ const names=$("wPeople").value.split(/[\n,，、]+/).map(x=>x.trim()).filter(Boolean);
+ if(!team) return toast("팀 이름을 넣으세요"); if(!names.length) return toast("팀원 이름을 넣으세요");
+ if(new Set(names).size!==names.length) return toast("같은 이름이 두 번 있습니다");
+ if(de<=ds) return toast("근무시간을 확인하세요"); if(pw.length<4) return toast("팀 암호는 4글자 이상");
+ $("wMake").disabled=true; $("wMake").textContent="만드는 중…";
+ try{
+  const r=await fetch("https://www.npoint.io/documents",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+  const j=await r.json(); if(!j.token) throw new Error("칸 만들기 실패");
+  BIN=j.token; API="https://api.npoint.io/"+BIN; await usePw(pw,true);
+  const db={team,people:names.map((n,i)=>({id:"p"+(i+1),name:n})),items:[],cfg:{ds,de,min:2}};
+  await putRemote(db);
+  history.replaceState(null,"",location.pathname+"?b="+BIN);
+  DB=db; applyCfg(db); setPeople(db); showApp(); render(); goTab("set"); renderSec();
+  toast("만들었습니다! 아래 초대 링크를 팀원에게 보내세요");
+ }catch(e){ toast("만들기 실패: "+e.message+" (인터넷 차단 여부 확인)"); }
+ $("wMake").disabled=false; $("wMake").textContent="우리 팀 보드 만들기";
+}
+
+// ===== 시작 =====
+async function boot(){
+ init();
+ document.querySelectorAll("[data-go-tab]").forEach(b=>b.onclick=()=>{goTab(b.dataset.goTab); if(b.dataset.goTab==="set") renderSec(); window.scrollTo(0,0);});
+ document.querySelectorAll("[data-sub]").forEach(b=>b.onclick=()=>goSub(b.dataset.sub));
+ $("formCard").addEventListener("change",()=>setTimeout(updWarn,0));
+ $("addThisDay").onclick=()=>{ if(!selDay) return; if(F.multi) setMulti(false); linkForm(selDay); goTab("add"); goSub("form"); window.scrollTo(0,0); };
+ $("pwGo").onclick=async()=>{ const pw=$("pwIn").value; if(!pw) return; await usePw(pw,true); $("pwIn").value=""; load(); };
+ $("pwIn").addEventListener("keydown",e=>{if(e.key==="Enter") $("pwGo").click();});
+ $("wMake").onclick=makeBoard; hourOpts("wDS",540); hourOpts("wDE",1080);
+ $("cfgSave").onclick=async()=>{ const ds=+$("cDS").value, de=+$("cDE").value, mn=+$("cMin").value; if(de<=ds) return toast("근무시간을 확인하세요");
+  try{await mutate(db=>{db.cfg={ds,de,min:mn}}); toast("근무 기준을 저장했습니다")}catch(e){toast("저장 안 됨: "+e.message)} };
+ $("secBox").addEventListener("click",async e=>{
+  if(e.target.id==="invCopy"){ const t=$("invLink"); t.select(); try{await navigator.clipboard.writeText(t.value)}catch(e2){document.execCommand("copy")} toast("링크를 복사했습니다"); }
+  if(e.target.id==="setPwBtn"){ const pw=$("setPw").value.trim(); if(pw.length<4) return toast("4글자 이상 넣으세요");
+   if(!confirm("팀 암호를 걸까요?\n암호를 잊으면 아무도 되찾을 수 없습니다. 팀원 모두 새 초대 링크로 다시 열어야 합니다.")) return;
+   try{ const db=await getRemote(); await usePw(pw,true); await putRemote(db); ENC=true; DB=db; renderSec(); toast("암호를 걸었습니다. 새 초대 링크를 보내세요"); }catch(e2){ KEY=null; toast("실패: "+e2.message); } }
+  if(e.target.id==="restoreBtn"){ let c=null; try{c=JSON.parse(localStorage.getItem(LS())||"null")}catch(e2){}
+   if(!c||!c.items) return toast("이 기기에 저장본이 없습니다");
+   if(!confirm("이 기기에 남은 내용(일정 "+c.items.length+"건)으로 저장소를 덮어쓸까요?")) return;
+   try{ await putRemote(c); toast("되살렸습니다"); load(); }catch(e2){ toast("실패: "+e2.message); } }
+ });
+ if(!BIN){ $("welcome").style.display="block"; $("teamTitle").textContent="팀 일정보드"; $("sync").textContent=""; return; }
+ const hk=new URLSearchParams(location.hash.slice(1)).get("k");
+ if(hk){ await usePw(hk,true); history.replaceState(null,"",location.pathname+location.search); }
+ else { try{const pw=localStorage.getItem(LS("pw")); if(pw) await usePw(pw,false);}catch(e){} }
+ goTab("today"); await load();
+ setInterval(()=>{ if(!document.hidden && !$("pop").classList.contains("show") && $("app").style.display!=="none") load() },30000);
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden && $("app").style.display!=="none") load()});
+}
+boot();
 </script>
 </body>
 </html>

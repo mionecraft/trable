@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>독서지원팀 일정보드</title>
+<style>
+:root{--bg:#eef5fb;--card:#fff;--navy:#1f2f6b;--ink:#20304a;--mut:#7a869c;--line:#dfe7f1;
+--red:#e5484d;--redbg:#ffe3e3;--yel:#f5b400;--yelbg:#fff4cc;--ok:#2fb37a;--okbg:#dcf5e8;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink);line-height:1.45}
+.wrap{max-width:900px;margin:0 auto;padding:14px 12px 60px}
+header{display:flex;align-items:flex-end;gap:10px;margin:6px 2px 12px}
+header h1{margin:0;font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-.5px;
+ background:linear-gradient(transparent 62%,#bfe3ff 62%);display:inline}
+header .sync{margin-left:auto;font-size:12px;color:var(--mut);text-align:right}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:4px;vertical-align:1px}
+.dot.bad{background:var(--red)}
+.card{background:var(--card);border:2px solid var(--navy);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:4px 4px 0 #c9d8ee}
+.card h2{margin:0 0 10px;font-size:16px;font-weight:900;color:var(--navy)}
+/* 오늘 */
+.now{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.person{border-radius:12px;padding:9px 6px;text-align:center;border:2px solid var(--line)}
+.person b{display:block;font-size:15px}
+.person span{font-size:12px}
+.person.in{background:var(--okbg);border-color:#9fdcbf}
+.person.out{background:#f1f3f7;color:#98a1b2}
+.callnow{font-size:15px;font-weight:800;padding:10px 12px;border-radius:12px;margin-bottom:10px}
+.callnow.ok{background:var(--okbg)} .callnow.one{background:var(--redbg);color:#a01b20} .callnow.zero{background:#a01b20;color:#fff}
+/* 경고 */
+.alerts{display:flex;flex-direction:column;gap:6px}
+.al{display:flex;gap:8px;align-items:center;font-size:14px;padding:8px 10px;border-radius:10px;cursor:pointer}
+.al.zero{background:#ffd0d0;border:2px solid #a01b20} .al.one{background:var(--redbg)}
+.al .tag{font-size:11px;font-weight:900;padding:2px 7px;border-radius:20px;color:#fff;white-space:nowrap}
+.al.zero .tag{background:#7a0f14} .al.one .tag{background:var(--red)}
+.none{color:var(--mut);font-size:14px}
+/* 날짜별 */
+.day{border-top:1px dashed var(--line);padding:10px 0 8px}
+.day:first-child{border-top:0}
+.day.today{background:#f4f9ff;border-radius:10px;padding:10px 6px;outline:2px solid #9cc9ff}
+.dhead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.dhead .d{font-weight:900;font-size:15px;min-width:74px}
+.dhead .badge{font-size:12px;font-weight:800;padding:2px 8px;border-radius:20px}
+.badge.zero{background:#7a0f14;color:#fff}.badge.one{background:var(--red);color:#fff}.badge.ok{background:var(--okbg);color:#1b7a50}
+.lane{display:flex;align-items:center;gap:6px;height:24px;margin:3px 0}
+.lane .nm{width:46px;font-size:12px;font-weight:700;flex-shrink:0;text-align:right}
+.bar{position:relative;flex:1;height:22px;background:#f6f9fc;border-radius:6px;border:1px solid var(--line);overflow:hidden}
+.bar .tick{position:absolute;top:0;bottom:0;width:1px;background:#e3eaf3}
+.blk{position:absolute;top:1px;bottom:1px;border-radius:5px;font-size:11px;font-weight:800;color:#fff;
+ display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;cursor:pointer;padding:0 3px}
+.cov .bar{height:14px}
+.seg{position:absolute;top:0;bottom:0}
+.seg.s0{background:#7a0f14}.seg.s1{background:var(--red)}.seg.s2{background:#8fd6b4}.seg.s3{background:#c3ebd6}.seg.s4{background:#e3f6ec}
+.axis{display:flex;margin-left:52px;position:relative;height:14px;font-size:10px;color:var(--mut)}
+.axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.axis span:last-child{transform:translateX(-100%)}
+.axis span:first-child{transform:none}
+.hol{color:var(--mut);font-size:13px}
+.more{display:block;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:2px solid var(--navy);background:#fff;font-weight:800;color:var(--navy);font-size:14px;cursor:pointer}
+/* 입력 */
+.form{display:grid;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row>label{font-size:13px;font-weight:800;width:56px;flex-shrink:0}
+.chip{border:2px solid var(--line);background:#fff;border-radius:20px;padding:6px 11px;font-size:14px;cursor:pointer;font-weight:700;color:var(--ink)}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+input,select{font:inherit;font-size:14px;padding:7px 8px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input[type=text]{flex:1;min-width:140px}
+.save{background:var(--navy);color:#fff;border:0;border-radius:12px;padding:12px;font-size:16px;font-weight:900;cursor:pointer}
+.save:disabled{opacity:.5}
+.hint{font-size:12px;color:var(--mut)}
+.undated li{margin:4px 0;font-size:14px}
+.x{border:0;background:#f1f3f7;border-radius:8px;padding:3px 8px;font-size:12px;cursor:pointer;margin-left:6px}
+/* 팝업 */
+.pop{position:fixed;inset:0;background:rgba(20,30,60,.35);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.pop.show{display:flex}
+.sheet{background:#fff;border-radius:18px 18px 0 0;padding:18px;width:100%;max-width:520px;border:2px solid var(--navy)}
+.sheet h3{margin:0 0 6px}
+.sheet .btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.sheet button{flex:1;padding:11px;border-radius:10px;border:2px solid var(--navy);background:#fff;font-weight:800;font-size:14px;cursor:pointer}
+.sheet button.del{background:var(--red);border-color:var(--red);color:#fff}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;font-weight:700;display:none;z-index:60}
+.mhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}.mhead h2{margin:0;flex:1;text-align:center;font-size:18px}
+.nav{border:2px solid var(--navy);background:#fff;color:var(--navy);border-radius:10px;width:40px;height:34px;font-weight:900;cursor:pointer}
+.ppl .prow{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+.ppl .prow input{flex:1;min-width:90px}
+textarea{font:inherit;font-size:14px;width:100%;padding:8px;border:2px solid var(--line);border-radius:10px;resize:vertical}
+.pr{border:2px solid var(--line);border-radius:12px;padding:8px;margin-top:8px;display:grid;gap:6px}
+.pr.off{opacity:.55}.pr .src{font-size:12px;color:var(--mut)}.pr .wn{font-size:12px;color:#c4282d;font-weight:800}
+.pr select,.pr input{font-size:13px;padding:5px 6px}
+.pk{min-height:40px;border:2px solid var(--line);border-radius:9px;background:#fff;font-weight:900;font-size:14px;cursor:pointer;position:relative;color:var(--ink)}
+.pk.on{background:var(--navy);border-color:var(--navy);color:#fff}.pk.dis{opacity:.3;cursor:default}
+.pk.has::after{content:"";position:absolute;right:4px;top:4px;width:7px;height:7px;border-radius:50%;background:#f08c00}
+.pk.hol{color:var(--red)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;display:flex;background:#fff;border-top:2px solid var(--navy);z-index:40;padding-bottom:env(safe-area-inset-bottom)}
+.tabbar button{flex:1;border:0;background:#fff;padding:7px 0 8px;font-size:18px;cursor:pointer;color:var(--mut)}
+.tabbar button b{display:block;font-size:12px;margin-top:1px}
+.tabbar button.on{color:var(--navy);background:#e6f0fb}
+.tab{display:none}.tab.on{display:block}
+.seg2{display:flex;gap:6px;margin-bottom:10px}.seg2 .chip{flex:1;font-size:15px;padding:9px}
+.gapw{display:none;background:var(--redbg);border:2px solid var(--red);border-radius:12px;padding:8px 10px;font-size:14px;color:#8a1216}
+.gapw.show{display:block}.gapw b{color:#c4282d}
+.sl{width:64px;font-size:13px;flex-shrink:0}
+.wrap{padding-bottom:90px}
+.cal{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.cal .wh{text-align:center;font-size:12px;font-weight:800;color:var(--mut)}
+.cell{min-height:74px;border:2px solid var(--line);border-radius:10px;padding:3px;cursor:pointer;background:#fff;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.cell .n{font-size:13px;font-weight:900}
+.cell.past{opacity:.35;cursor:default}.cell.hol{background:#f4f4f6;cursor:default}.cell.hol .n{color:var(--red)}
+.cell.zero{background:#ffc9c9;border-color:#7a0f14}.cell.one{background:var(--redbg);border-color:var(--red)}
+.cell.sel{outline:3px solid var(--navy);outline-offset:-1px}.cell.today .n{background:var(--navy);color:#fff;border-radius:6px;padding:0 5px;align-self:flex-start}
+.cell.empty{border:0;background:transparent;cursor:default}
+.mini{font-size:10.5px;font-weight:800;color:#fff;border-radius:4px;padding:0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:15px}
+.cell .hn{font-size:10px;color:var(--red);font-weight:700}
+.legend{font-size:12px;color:var(--mut);margin:8px 2px 4px}.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin:0 3px 0 6px}
+.legend .lz{background:#7a0f14}.legend .lo{background:var(--red)}
+#days .day{border-top:0;margin-top:8px}
+.exist{background:#f4f9ff;border:2px dashed #9cc9ff;border-radius:12px;padding:8px 10px;font-size:14px;display:none}
+.exist b{color:var(--navy)}.exist .eb{display:inline-block;margin:4px 6px 0 0;padding:5px 10px;border-radius:16px;border:2px solid var(--navy);background:#fff;font-weight:800;font-size:13px;cursor:pointer;color:var(--navy)}
+.exist .eb.on{background:var(--navy);color:#fff}
+@media(min-width:760px){.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.grid2 .card{margin-bottom:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1 id="teamTitle">팀 일정보드</h1><div class="sync" id="sync">불러오는 중…</div></header>
+
+<!-- 처음 온 사람: 우리 팀 보드 만들기 -->
+<section class="card" id="welcome" style="display:none">
+ <h2>우리 팀 일정보드 만들기</h2>
+ <p style="margin:0 0 10px;font-size:14px">근무시간에 <b>전화 받을 사람이 남는지</b> 한눈에 보는 팀 일정판입니다. 연가·출장·교육·육아시간을 넣으면 <b style="color:#c4282d">혼자 근무·아무도 없는 시간</b>을 빨갛게 알려 주고, 넣기 전에 미리 경고해 줍니다. 회원가입 없이 1분이면 만듭니다.</p>
+ <div class="form">
+  <div class="row"><label>팀 이름</label><input type="text" id="wTeam" placeholder="예: 독서지원팀"></div>
+  <div class="row" style="align-items:flex-start"><label>팀원</label><textarea id="wPeople" rows="3" placeholder="한 줄에 한 명 (또는 쉼표로)&#10;예: 김민지, 박서준, 이하늘"></textarea></div>
+  <div class="row"><label>근무시간</label><select id="wDS"></select> ~ <select id="wDE"></select></div>
+  <div class="row"><label>팀 암호</label><input type="text" id="wPw" placeholder="4글자 이상 · 팀원끼리만 공유"></div>
+  <p class="hint" style="margin:0">일정은 팀 암호로 잠가서(암호화) 저장합니다. 암호를 모르면 링크가 있어도 내용을 볼 수 없고, 만든 사람도 암호를 되찾아 줄 수 없습니다.</p>
+  <button class="save" id="wMake">우리 팀 보드 만들기</button>
+ </div>
+</section>
+
+<!-- 암호 묻기 -->
+<section class="card" id="pwBox" style="display:none">
+ <h2>🔒 팀 암호를 넣어 주세요</h2>
+ <p class="hint" id="pwMsg" style="margin:0 0 8px">이 일정보드는 팀 암호로 잠겨 있습니다.</p>
+ <div class="row"><input type="password" id="pwIn" placeholder="팀 암호"><button class="chip on" id="pwGo">열기</button></div>
+</section>
+
+<div id="app" style="display:none">
+<!-- ① 오늘 -->
+<div class="tab" data-tab="today">
+ <div class="grid2">
+  <section class="card"><h2 id="todayTitle">오늘</h2><div id="callnow"></div><div class="now" id="now"></div><div id="todayDay"></div></section>
+  <section class="card"><h2>⚠ 근무 인원 주의</h2><div class="hint" id="alHint" style="margin:-6px 0 8px"></div><div class="alerts" id="alerts"></div></section>
+ </div>
+</div>
+
+<!-- ② 달력 -->
+<div class="tab" data-tab="cal">
+ <section class="card"><div class="mhead"><button class="nav" id="prevM">◀</button><h2 id="mTitle"></h2><button class="nav" id="nextM">▶</button></div>
+ <div class="cal" id="cal"></div>
+ <div class="legend">칸 색: <i class="lo"></i>인원 부족(혼자 등) <i class="lz"></i>아무도 없음 · 이름 = 그날 자리 비우는 사람</div>
+ <div id="days"></div>
+ <button type="button" class="more" id="addThisDay" style="display:none">+ 이 날 일정 넣기</button></section>
+ <section class="card"><h2>날짜 미정 일정</h2><ul class="undated" id="undated"></ul></section>
+</div>
+
+<!-- ③ 일정 넣기 -->
+<div class="tab" data-tab="add">
+ <div class="seg2"><button type="button" class="chip on" data-sub="paste">📋 쪽지로 넣기</button><button type="button" class="chip" data-sub="form">✏ 직접 넣기</button></div>
+ <section class="card sub" data-subp="paste"><h2>쪽지 붙여넣어 한 번에 넣기</h2>
+ <textarea id="pasteTxt" rows="5" placeholder="평소 쪽지 그대로 붙여넣으세요. 예)&#10;은우 24일 연가&#10;가인 11/26~28 교육&#10;지숙 25일 14시~16시 외출, 27일 오후반차&#10;팀장님 다음주 월요일 출장"></textarea>
+ <button class="save" id="parseBtn" style="width:100%;margin-top:8px">읽어서 미리보기</button>
+ <div id="pasteOut"></div></section>
+
+ <section class="card sub" data-subp="form" id="formCard" style="display:none"><h2>일정 넣기</h2>
+ <div class="form">
+  <div class="row"><label>이름</label><div id="fWho" class="row"></div></div>
+  <div class="row"><label>날짜</label><span id="rangeBox" class="row"><input type="date" id="fFrom"> ~ <input type="date" id="fTo"><span class="hint">하루면 뒤 칸 비움</span></span><button type="button" class="chip" id="multiBtn">📅 여러 날 골라 넣기</button></div>
+  <div id="pickBox" style="display:none"></div>
+  <div id="fExist" class="exist"></div>
+  <div class="row"><label>종류</label><div id="fKind" class="row"></div></div>
+  <div class="row" id="repRow"><label>반복</label><div id="fRep" class="row"></div><span class="hint">요일 고르면 매주 반복 (날짜 = 시작~끝, 끝 비우면 계속)</span></div>
+  <div class="row"><label>시간</label><div id="fMode" class="row"></div></div>
+  <div class="row" id="timeRow"><label></label><select id="fT1"></select> ~ <select id="fT2"></select><span class="hint" id="timeHint"></span></div>
+  <div class="row"><label>메모</label><input type="text" id="fMemo" placeholder="(선택)"></div>
+  <div class="row" id="undRow"><label></label><label style="width:auto;font-weight:600;font-size:13px"><input type="checkbox" id="fUndated"> 날짜 아직 미정</label></div>
+  <div class="gapw" id="fWarn"></div>
+  <button class="save" id="saveBtn">저장 (팀 모두에게 바로 보임)</button>
+  <div class="row" id="editBtns" style="display:none;gap:8px">
+   <button type="button" class="more" id="skipDayBtn" style="flex:1;margin:0;border-color:#e8a200;color:#8a5f00">이 날만 지우기</button>
+   <button type="button" class="more" id="delEditBtn" style="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff">이 일정 삭제</button>
+  </div>
+  <button type="button" class="more" id="cancelEdit" style="display:none" onclick="endEdit()">수정 취소</button>
+ </div></section>
+</div>
+
+<!-- ④ 설정 -->
+<div class="tab ppl" data-tab="set">
+ <section class="card"><h2>팀 이름·근무 기준</h2>
+  <div class="prow"><b class="sl">팀 이름</b><input type="text" id="teamName"><button type="button" class="chip" id="teamSave">저장</button></div>
+  <div class="prow"><b class="sl">근무시간</b><select id="cDS"></select> ~ <select id="cDE"></select></div>
+  <div class="prow"><b class="sl">최소 인원</b><select id="cMin"><option value="1">1명 (아무도 없을 때만 경고)</option><option value="2">2명 (혼자 남으면 경고)</option><option value="3">3명</option><option value="4">4명</option></select></div>
+  <button type="button" class="chip" id="cfgSave">근무 기준 저장</button>
+ </section>
+ <section class="card"><h2>팀원</h2>
+  <div class="hint" style="margin:0 0 2px">앞 칸 = 실제 이름, 뒤 칸 = 화면에 부를 이름(예: 팀장님)</div>
+  <div id="pplList"></div>
+  <div class="prow"><input type="text" id="newName" placeholder="새 팀원 이름"><input type="text" id="newLabel" placeholder="부를 이름(선택)"><button type="button" class="chip" id="addPpl">+ 추가</button></div>
+  <p class="hint">이름을 바꾸면 그 사람의 일정도 새 이름으로 같이 옮겨집니다. 쪽지에서는 성 뺀 이름(은우)·부를 이름(팀장님)도 알아봅니다.</p>
+ </section>
+ <section class="card"><h2>팀원 초대·보안</h2><div id="secBox"></div></section>
+ <p class="hint" style="text-align:center">막대를 누르면 수정·그날만 지우기 · 30초마다 자동 새로고침 · <a href="https://mionecraft.github.io/trable/board/" style="color:inherit">새 팀 보드 만들기</a></p>
+</div>
+</div>
+</div>
+<nav class="tabbar" id="tabbar" style="display:none"><button data-go-tab="today">🏠<b>오늘</b></button><button data-go-tab="cal">📅<b>달력</b></button><button data-go-tab="add">✏<b>일정 넣기</b></button><button data-go-tab="set">⚙<b>설정</b></button></nav>
+
+<div class="pop" id="pop"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 설정 =====
+// 우리 팀(/team/ 주소)은 원래 쓰던 칸, 공개용(/board/)은 팀마다 새 칸(?b=칸번호)
+const OUR_BIN="9e4cd48123e5dd28804d";
+const QS=new URLSearchParams(location.search);
+let BIN=QS.get("b")||(/\/team\/?(index\.html)?$/.test(location.pathname)?OUR_BIN:null);
+let API=BIN?"https://api.npoint.io/"+BIN:null;
+const LS=k=>"teamboard"+(BIN===OUR_BIN?"":"_"+BIN)+(k?"_"+k:"");
+// 팀원·팀 이름은 저장소(DB.people, DB.team)에 둠 → 앱 안에서 바꾸기·추가
+const DEF_TEAM="독서지원팀";
+const DEF_PEOPLE=[{id:"p1",name:"전선숙",label:"팀장님"},{id:"p2",name:"박지숙"},{id:"p3",name:"이은우"},{id:"p4",name:"손가인"}];
+let PPL=DEF_PEOPLE.map(o=>({...o})), PEOPLE=PPL.map(p=>p.name), pplSig="", TEAM=DEF_TEAM;
+const NM=p=>{const o=PPL.find(x=>x.name===p);return (o&&o.label)?o.label:p};
+function setPeople(db){
+ PPL=(db&&Array.isArray(db.people)&&db.people.length)?db.people:DEF_PEOPLE.map(o=>({...o}));
+ PPL.forEach((p,i)=>{if(!p.id)p.id="p"+(i+1)});
+ PEOPLE=PPL.map(p=>p.name); TEAM=(db&&db.team)||DEF_TEAM;
+ const sig=JSON.stringify([TEAM,PPL,DS,DE,MIN]); if(sig!==pplSig){pplSig=sig; peopleChanged();}
+}
+const KINDS=["연가","반차","대체휴무","특별휴가","대휴·특휴","공가","병가","교육","출장","육아시간","외출","기타"];
+const COLOR={"연가":"#4c6ef5","반차":"#748ffc","대체휴무":"#7048e8","특별휴가":"#ae3ec9","대휴·특휴":"#9c36b5","공가":"#1098ad","병가":"#868e96","교육":"#f08c00","출장":"#e8590c","육아시간":"#2b8a3e","외출":"#0ca678","기타":"#495057"};
+let DS=540, DE=1080, MIN=2; // 근무시간(분)·최소 인원 — 설정에서 바꿈
+const FULL=[[0,1440]]; // 종일
+// 평일 공휴일 (우주항공청 2027 월력요항 기준. 선거일·임시공휴일 생기면 추가)
+const HOL={"2026-12-25":"성탄절","2027-01-01":"신정","2027-02-08":"설 연휴","2027-02-09":"대체공휴일(설)","2027-03-01":"삼일절","2027-05-03":"대체공휴일(노동절)","2027-05-05":"어린이날","2027-05-13":"부처님오신날","2027-08-16":"대체공휴일(광복절)","2027-09-14":"추석 연휴","2027-09-15":"추석","2027-09-16":"추석 연휴","2027-10-04":"대체공휴일(개천절)","2027-10-11":"대체공휴일(한글날)","2027-12-27":"대체공휴일(성탄절)"};
+const WD="일월화수목금토";
+
+// ===== 날짜·시간 도우미 =====
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse=s=>{const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)};
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const hm=m=>Math.floor(m/60)+":"+pad(m%60);
+const md=s=>{const d=parse(s);return (d.getMonth()+1)+"/"+d.getDate()+"("+WD[d.getDay()]+")"};
+const isWork=s=>{const w=parse(s).getDay();return w>0&&w<6&&!HOL[s]};
+
+// ===== 계산 (그날 누가 언제 비는지) =====
+function itemsOn(items,s){
+ const w=parse(s).getDay();
+ return items.filter(it=>{
+  if(!it.from) return false;
+  if((it.skip||[]).includes(s)) return false;
+  if(it.rep&&it.rep.length){ return s>=it.from && (!it.to||s<=it.to) && it.rep.includes(w); }
+  return s>=it.from && s<=(it.to||it.from);
+ }).filter((it,i,arr)=>!arr.slice(i+1).some(o=>o.who===it.who&&o.kind===it.kind)); // 같은 사람·같은 종류는 나중에 넣은 것만
+}
+function dayInfo(items,s){
+ const list=itemsOn(items,s);
+ const away={}; PEOPLE.forEach(p=>away[p]=[]);
+ list.forEach(it=>it.ranges.map(r=>(r[0]<=540&&r[1]>=1080)?[0,1440]:r).forEach(r=>{ if(away[it.who]) away[it.who].push({a:Math.max(DS,r[0]),b:Math.min(DE,r[1]),it}); }));
+ // 하루 종일 비는 일정이 있으면 그날은 그것만 (반복 육아시간 등은 숨김)
+ PEOPLE.forEach(p=>{ const f=away[p].filter(x=>x.a<=DS&&x.b>=DE); if(f.length) away[p]=[f[f.length-1]]; });
+ // 시간 경계마다 근무 인원 계산
+ const cuts=new Set([DS,DE]);
+ Object.values(away).flat().forEach(x=>{cuts.add(x.a);cuts.add(x.b)});
+ const pts=[...cuts].filter(x=>x>=DS&&x<=DE).sort((a,b)=>a-b);
+ const segs=[];
+ for(let i=0;i<pts.length-1;i++){
+  const a=pts[i],b=pts[i+1],mid=(a+b)/2;
+  const inP=PEOPLE.filter(p=>!away[p].some(x=>x.a<=mid&&mid<x.b));
+  const last=segs[segs.length-1];
+  if(last&&last.inP.join()==inP.join()) last.b=b; else segs.push({a,b,inP});
+ }
+ return {away,segs};
+}
+
+// ===== 저장소 (팀 암호가 있으면 암호화해서 저장) =====
+let DB={items:[]}, online=false, KEY=null, ENC=false, BAD=false;
+const b64=u=>btoa(String.fromCharCode(...u)), unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+async function mkKey(pw){ const e=new TextEncoder(); const base=await crypto.subtle.importKey("raw",e.encode(pw),"PBKDF2",false,["deriveKey"]);
+ return crypto.subtle.deriveKey({name:"PBKDF2",salt:e.encode("teamboard:"+BIN),iterations:150000,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]); }
+async function seal(o){ if(!KEY) return o; const iv=crypto.getRandomValues(new Uint8Array(12));
+ const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},KEY,new TextEncoder().encode(JSON.stringify(o)))); return {v:1,enc:b64(iv)+"."+b64(ct)}; }
+async function unseal(j){ if(!j||!j.enc){ENC=false; return (j&&j.items)?j:{items:[]};} ENC=true;
+ if(!KEY){const e=new Error("NEEDPW"); throw e;}
+ try{ const [iv,ct]=j.enc.split(".").map(unb64); return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv},KEY,ct))); }
+ catch(e){ throw new Error("BADPW"); } }
+async function getRemote(){ const r=await fetch(API+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) throw new Error("불러오기 실패"); return unseal(await r.json()); }
+async function putRemote(db){ const w=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(await seal(db))}); if(!w.ok) throw new Error("저장 실패"); }
+function applyCfg(db){ const c=(db&&db.cfg)||{}; const ds=c.ds||540, de=c.de||1080, mn=c.min||2; const ch=ds!==DS||de!==DE; DS=ds; DE=de; MIN=mn; if(ch) buildTimeOpts(); }
+async function load(){
+ try{
+  DB=await getRemote(); online=true; BAD=false; applyCfg(DB); setPeople(DB);
+  try{localStorage.setItem(LS(),JSON.stringify(DB))}catch(e){}
+ }catch(e){
+  if(e.message==="NEEDPW"||e.message==="BADPW"){ return askPw(e.message==="BADPW"?"암호가 맞지 않습니다. 다시 넣어 주세요.":""); }
+  online=false; try{const c=localStorage.getItem(LS()); if(c) DB=JSON.parse(c)}catch(e2){} applyCfg(DB); setPeople(DB);
+ }
+ showApp(); render(); if(!editId) syncExisting();
+}
+// 저장 직전에 최신본을 다시 받아서 내 변경만 얹음 → 동시에 고쳐도 남의 입력이 안 지워짐
+async function mutate(fn){
+ const db=await getRemote();
+ if(!Array.isArray(db.people)||!db.people.length) db.people=PPL.map(o=>({...o}));
+ if(!db.team) db.team=TEAM;
+ if(!Array.isArray(db.items)) db.items=[];
+ fn(db);
+ // 이미 끝난 일정(반복 아닌 것)은 저장소에서 지움
+ const t=ymd(new Date());
+ db.items=db.items.filter(it=>!it.from||(it.rep&&it.rep.length)||(it.to||it.from)>=t);
+ db.items.forEach(it=>{ if(it.skip) it.skip=it.skip.filter(d=>d>=t) });
+ await putRemote(db);
+ DB=db; online=true; applyCfg(db); setPeople(db); try{localStorage.setItem(LS(),JSON.stringify(DB))}catch(e){} render();
+}
+
+// ===== 그리기 =====
+const $=id=>document.getElementById(id);
+const pct=m=>((m-DS)/(DE-DS)*100);
+function laneHTML(p,info,s){
+ let h='<div class="lane"><div class="nm">'+NM(p)+'</div><div class="bar">'+ticks();
+ info.away[p].forEach(x=>{
+  const it=x.it, full=(x.a===DS&&x.b===DE);
+  const w=pct(x.b)-pct(x.a);
+  const lab=full?it.kind:(w>=34?it.kind+' '+hm(x.a)+'~'+hm(x.b):w>=20?it.kind:w>=10?hm(x.a):'');
+  h+='<div class="blk" data-id="'+it.id+'" data-d="'+s+'" style="left:'+pct(x.a)+'%;width:'+w+'%;background:'+(COLOR[it.kind]||"#495057")+'" title="'+it.kind+' '+hm(x.a)+'~'+hm(x.b)+'">'+lab+'</div>';
+ });
+ return h+'</div></div>';
+}
+function ticks(){const t=[];for(let m=Math.ceil((DS+1)/60)*60;m<DE;m+=60)t.push(m);return t.map(m=>'<div class="tick" style="left:'+pct(m)+'%"></div>').join("")}
+function covHTML(info){
+ let h='<div class="lane cov"><div class="nm" style="color:#7a869c">인원</div><div class="bar">';
+ info.segs.forEach(g=>h+='<div class="seg '+segCls(g.inP.length)+'" style="left:'+pct(g.a)+'%;width:'+(pct(g.b)-pct(g.a))+'%" title="'+hm(g.a)+'~'+hm(g.b)+' '+g.inP.length+'명"></div>');
+ return h+'</div></div>';
+}
+function axisHTML(){const t=[DS];for(let m=Math.ceil((DS+1)/180)*180;m<DE-60;m+=180)if(m-DS>=90)t.push(m);t.push(DE);return '<div class="axis">'+t.map(m=>'<span style="left:'+pct(m)+'%">'+hm(m).replace(":00","")+'시</span>').join("")+'</div>'}
+const segCls=n=>n===0?'s0':n<MIN?'s1':'s'+Math.max(2,Math.min(n,4));
+const lowTxt=g=>g.inP.length===0?'아무도 없음':g.inP.length===1?NM(g.inP[0])+' 혼자':g.inP.map(NM).join('·')+'만 ('+g.inP.length+'명)';
+function badge(info){
+ const z=info.segs.filter(g=>g.inP.length===0), o=info.segs.filter(g=>g.inP.length>0&&g.inP.length<MIN);
+ if(z.length) return '<span class="badge zero">⚠ 아무도 없음 '+z.map(g=>hm(g.a)+'~'+hm(g.b)).join(", ")+'</span>';
+ if(o.length) return '<span class="badge one">⚠ '+o.map(g=>hm(g.a)+'~'+hm(g.b)+' '+lowTxt(g)).join(", ")+'</span>';
+ const any=PEOPLE.some(p=>info.away[p].length);
+ return any?'<span class="badge ok">근무 OK</span>':'';
+}
+function dayHTML(s,isToday){
+ if(!isWork(s)) return '';
+ const info=dayInfo(DB.items,s);
+ let h='<div class="day'+(isToday?' today':'')+'" id="d'+s+'"><div class="dhead"><span class="d">'+md(s)+(isToday?' 오늘':'')+'</span>'+badge(info)+'</div>';
+ PEOPLE.forEach(p=>h+=laneHTML(p,info,s));
+ return h+covHTML(info)+axisHTML()+'</div>';
+}
+function render(){
+ const now=new Date(), today=ymd(now), mins=now.getHours()*60+now.getMinutes();
+ $("sync").innerHTML=online?'<span class="dot"></span>같이 보는 중 · '+pad(now.getHours())+":"+pad(now.getMinutes())+' 갱신':'<span class="dot bad"></span><b style="color:#e5484d">저장소 연결 안 됨</b><br>(이 PC 인터넷 차단?) 마지막 저장본 표시';
+ // 오늘
+ $("todayTitle").textContent="오늘 "+md(today);
+ $("now").style.gridTemplateColumns="repeat("+Math.min(Math.max(PEOPLE.length,1),5)+",1fr)";
+ if(isWork(today)){
+  const info=dayInfo(DB.items,today);
+  const t=Math.min(Math.max(mins,DS),DE-1);
+  const inWork=mins>=DS&&mins<DE;
+  $("now").innerHTML=PEOPLE.map(p=>{
+   const x=info.away[p].find(x=>x.a<=t&&t<x.b);
+   return '<div class="person '+(x?'out':'in')+'"><b>'+NM(p)+'</b><span>'+(x?x.it.kind+' ~'+hm(x.b):'자리에 있음')+'</span></div>';
+  }).join("");
+  const seg=info.segs.find(g=>g.a<=t&&t<g.b)||{inP:PEOPLE};
+  const n=seg.inP.length;
+  $("callnow").className="callnow "+(n===0?"zero":n<MIN?"one":"ok");
+  $("callnow").textContent=(inWork?"지금 ":"근무시간 아님 · "+hm(DS)+" 기준 ")+(n===0?"⚠ 아무도 없음 — 전화 받을 사람 없음":n<MIN?"⚠ 인원 부족: "+lowTxt(seg):"근무 중: "+seg.inP.map(NM).join(", ")+(n>=MIN&&n>1?" ("+n+"명)":""));
+  $("todayDay").innerHTML=dayHTML(today,false).replace('<div class="dhead">','<div class="dhead" style="display:none">');
+ }else{
+  $("now").innerHTML=""; $("callnow").className="callnow ok"; $("callnow").textContent=(HOL[today]||"주말")+" — 근무일 아님"; $("todayDay").innerHTML="";
+ }
+ // 혼자 근무 알림
+ let al=[]; let d=parse(today);
+ // 넣어 둔 일정의 마지막 날까지 (끝 없는 매주 반복만 있으면 1년까지)
+ let lastDay=today; DB.items.forEach(it=>{ if(!it.from) return; let e=it.to||(it.rep&&it.rep.length?ymd(addD(parse(today),365)):it.from); if(e>lastDay) lastDay=e; });
+ for(;ymd(d)<=lastDay;d=addD(d,1)){
+  const s=ymd(d); if(!isWork(s)) continue;
+  dayInfo(DB.items,s).segs.forEach(g=>{
+   if(s===today&&g.b<=mins) return;
+   if(g.inP.length<MIN) al.push({s,g});
+  });
+ }
+ $("alerts").innerHTML=al.length?al.map(x=>'<div class="al '+(x.g.inP.length?'one':'zero')+'" data-go="'+x.s+'"><span class="tag">⚠ '+x.g.inP.length+'명</span><b>'+md(x.s)+'</b> '+hm(x.g.a)+'~'+hm(x.g.b)+' · <b>'+lowTxt(x.g)+'</b></div>').join(""):'<div class="none">항상 '+MIN+'명 이상 근무 👍</div>';
+ $("alHint").textContent="근무시간("+hm(DS)+"~"+hm(DE)+")에 "+(MIN>1?(MIN-1)+"명 이하로":"아무도 없이")+" 남는 때 · 누르면 달력으로";
+ // 월별 달력
+ renderCal(today);
+ // 미정
+ const und=DB.items.filter(it=>!it.from);
+ $("undated").innerHTML=und.length?und.map(it=>'<li><b>'+NM(it.who)+'</b> '+it.kind+(it.memo?' — '+esc(it.memo):'')+'<button class="x" data-del="'+it.id+'">지우기</button></li>').join(""):'<li class="none">없음</li>';
+}
+
+// ===== 월별 달력 =====
+let calY=null, calM=null, selDay=null;
+const KS={"연가":"연가","반차":"반차","대체휴무":"대휴","특별휴가":"특휴","대휴·특휴":"대휴","공가":"공가","병가":"병가","교육":"교육","출장":"출장","육아시간":"육아","외출":"외출","기타":"기타"};
+function renderCal(today){
+ if(calY===null){const d=parse(today);calY=d.getFullYear();calM=d.getMonth();}
+ if(!selDay) selDay=isWork(today)?today:null;
+ $("mTitle").textContent=calY+"년 "+(calM+1)+"월";
+ let h="월화수목금".split("").map(w=>'<div class="wh">'+w+'</div>').join("");
+ const first=new Date(calY,calM,1), last=new Date(calY,calM+1,0);
+ let lead=(first.getDay()+6)%7; if(lead>4) lead=0;
+ const cells=[]; for(let i=0;i<lead;i++) cells.push({s:"",h:'<div class="cell empty"></div>'});
+ for(let d=1;d<=last.getDate();d++){
+  const dt=new Date(calY,calM,d), w=dt.getDay(); if(w===0||w===6) continue;
+  const s=ymd(dt);
+  if(HOL[s]){cells.push({s,h:'<div class="cell hol"><span class="n">'+d+'</span><span class="hn">'+HOL[s]+'</span></div>'});continue;}
+  if(s<today){cells.push({s,h:'<div class="cell past"><span class="n">'+d+'</span></div>'});continue;}
+  const info=dayInfo(DB.items,s);
+  const z=info.segs.some(g=>g.inP.length===0), o=info.segs.some(g=>g.inP.length>0&&g.inP.length<MIN);
+  let chips="";
+  PEOPLE.forEach(p=>{const a=info.away[p]; if(!a.length) return;
+   const full=a.some(x=>x.a===DS&&x.b===DE);
+   chips+='<span class="mini" style="background:'+(COLOR[a[0].it.kind]||"#495057")+'">'+p+' '+(KS[a[0].it.kind]||a[0].it.kind)+'</span>';});
+  cells.push({s,h:'<div class="cell'+(z?' zero':o?' one':'')+(s===today?' today':'')+(s===selDay?' sel':'')+'" data-day="'+s+'"><span class="n">'+d+'</span>'+chips+'</div>'});
+ }
+ // 다 지나간 주는 줄째로 뺌
+ for(let i=0;i<cells.length;i+=5){const wk=cells.slice(i,i+5); if(wk.some(c=>c.s&&c.s>=today)) h+=wk.map(c=>c.h).join("");}
+ $("cal").innerHTML=h;
+ $("addThisDay").style.display=selDay?"block":"none";
+ $("days").innerHTML=selDay?dayHTML(selDay,selDay===today):'<div class="none" style="margin-top:8px">날짜를 누르면 그날 시간표가 여기 나옵니다</div>';
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ===== 막대 누르면 =====
+document.addEventListener("click",e=>{
+ const b=e.target.closest(".blk"); if(b) return openItem(b.dataset.id,b.dataset.d);
+ const c=e.target.closest("[data-day]"); if(c){selDay=c.dataset.day; if(F.multi){togglePick(selDay)} else linkForm(selDay); render();return;}
+ const ed=e.target.closest("[data-edit]"); if(ed){const it=DB.items.find(x=>x.id===ed.dataset.edit); if(it){startEdit(it,true); syncExisting();} return;}
+ const nw=e.target.closest("[data-newitem]"); if(nw){endEdit(); $("fExist").innerHTML='<b>'+NM(F.who)+' · '+md(pickDay||$("fFrom").value)+'</b> — 새 일정 넣는 중'; return;}
+ const g=e.target.closest("[data-go]"); if(g){selDay=g.dataset.go;linkForm(selDay);const d=parse(selDay);calY=d.getFullYear();calM=d.getMonth();render();goTab("cal");$("cal").scrollIntoView({behavior:"smooth",block:"start"});return;}
+ const x=e.target.closest("[data-del]"); if(x) return delItem(x.dataset.del);
+ if(e.target.id==="pop") closePop();
+});
+function openItem(id,s){
+ const it=DB.items.find(x=>x.id===id); if(!it) return;
+ const rep=it.rep&&it.rep.length;
+ const when=rep?('매주 '+it.rep.map(w=>WD[w]).join("·")+'요일 ('+it.from+' 부터'+(it.to?' ~ '+it.to+' 까지':'')+')'):(it.to&&it.to!==it.from?it.from+' ~ '+it.to:it.from);
+ $("sheet").innerHTML='<h3>'+NM(it.who)+' · '+it.kind+'</h3><div>'+when+'</div><div>'+it.ranges.map(r=>hm(r[0])+'~'+hm(r[1])).join(", ")+' 자리 비움</div>'+(it.memo?'<div class="hint">'+esc(it.memo)+'</div>':'')+
+  '<div class="btns"><button id="editBtn">수정</button>'+((rep||(it.to&&it.to!==it.from))?'<button class="del" id="skipBtn">'+md(s)+'만 지우기</button><button id="delBtn" style="flex:0 0 100%;font-size:12px;color:#7a869c;border-color:#c5ccd8">반복 전체 지우기</button>':'<button class="del" id="delBtn">지우기</button>')+'<button id="closeBtn">닫기</button></div>';
+ $("pop").classList.add("show");
+ $("closeBtn").onclick=closePop;
+ $("delBtn").onclick=()=>delItem(id);
+ $("editBtn").onclick=()=>{closePop();startEdit(it)};
+ const sk=$("skipBtn"); if(sk) sk.onclick=async()=>{try{await mutate(db=>{const t=db.items.find(x=>x.id===id); if(t){t.skip=t.skip||[]; if(!t.skip.includes(s)) t.skip.push(s)}}); toast(md(s)+"만 지웠습니다")}catch(e){toast("저장 안 됨: "+e.message)} closePop()};
+}
+const closePop=()=>$("pop").classList.remove("show");
+async function delItem(id){
+ const it=DB.items.find(x=>x.id===id); if(!it) return false;
+ const rep=(it.rep&&it.rep.length);
+ const multi=rep||(it.to&&it.to!==it.from);
+ if(!confirm(multi?("⚠ "+NM(it.who)+" "+it.kind+" — "+md(it.from)+" ~ "+(it.to?md(it.to):"끝없음")+" 모든 날이 지워집니다.\n하루만 지우려면 [취소] 후 'ㅇ일만 지우기'를 누르세요.\n\n정말 전체를 지울까요?"):(NM(it.who)+" "+it.kind+" 일정을 지울까요?"))) return false;
+ let ok=false;
+ try{await mutate(db=>{db.items=db.items.filter(x=>x.id!==id)}); toast("지웠습니다"); ok=true}catch(e){toast("저장 안 됨: "+e.message)}
+ closePop(); return ok;
+}
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",2200)}
+
+// ===== 입력 폼 =====
+const F={who:null,kind:null,rep:[],mode:"full",multi:false,days:[]};
+function chips(el,arr,key,multi,label){
+ $(el).innerHTML=arr.map(v=>'<button type="button" class="chip" data-v="'+v+'">'+(label?label(v):v)+'</button>').join("");
+ $(el).onclick=e=>{const b=e.target.closest(".chip"); if(!b) return; let v=b.dataset.v; if(key==="rep") v=+v;
+  if(multi){const i=F[key].indexOf(v); i<0?F[key].push(v):F[key].splice(i,1)} else F[key]=v;
+  if(key==="kind"&&v==="육아시간"&&F.mode==="full"){F.mode="work";paint("fMode","mode");}
+  if(key==="who") try{localStorage.setItem(LS("me"),v)}catch(e){}
+  if(key==="who"){ if(editId) endEdit(); setTimeout(syncExisting,0); if(F.multi) setTimeout(renderPick,0); }
+  paint(el,key); timeUI();};
+}
+function paint(el,key){[...$(el).children].forEach(b=>{let v=b.dataset.v; if(key==="rep") v=+v; b.classList.toggle("on",Array.isArray(F[key])?F[key].includes(v):F[key]===v)})}
+function timeUI(){
+ setTimeout(updWarn,0);
+ $("timeRow").style.display=F.mode==="full"?"none":"flex";
+ $("timeHint").textContent=F.mode==="work"?"이 시간만 근무 (앞뒤는 자리 비움)":"이 시간 동안 자리 비움";
+}
+function init(){
+ chips("fKind",KINDS,"kind");
+ chips("fRep",[1,2,3,4,5],"rep",true,v=>WD[v]);
+ $("fMode").innerHTML=[["full","종일"],["away","비우는 시간"],["work","근무하는 시간"]].map(x=>'<button type="button" class="chip" data-v="'+x[0]+'">'+x[1]+'</button>').join("");
+ $("fMode").onclick=e=>{const b=e.target.closest(".chip"); if(!b) return; F.mode=b.dataset.v; paint("fMode","mode"); timeUI()};
+ buildTimeOpts();
+ $("fFrom").value=ymd(new Date());
+ paint("fMode","mode"); timeUI(); initExtra(); setPeople(null);
+ $("saveBtn").onclick=save;
+ $("delEditBtn").onclick=async()=>{ const id=editId; if(!id) return; const ok=await delItem(id); if(ok){ endEdit(); syncExisting(); } };
+ $("skipDayBtn").onclick=async()=>{ const id=editId, day=pickDay||$("fFrom").value; if(!id||!day) return;
+   if(!confirm(md(day)+" 하루만 지울까요? (다른 날은 그대로)")) return;
+   try{await mutate(db=>{const t=db.items.find(x=>x.id===id); if(t){t.skip=t.skip||[]; if(!t.skip.includes(day)) t.skip.push(day)}}); toast(md(day)+"만 지웠습니다"); endEdit(); syncExisting();}catch(e){toast("저장 안 됨: "+e.message)} };
+ $("fFrom").addEventListener("change",()=>{pickDay=$("fFrom").value; if(editId) endEdit(); syncExisting();});
+ $("fUndated").addEventListener("change",syncExisting);
+ $("prevM").onclick=()=>{calM--;if(calM<0){calM=11;calY--}render()};
+ $("nextM").onclick=()=>{calM++;if(calM>11){calM=0;calY++}render()};
+}
+let editId=null, pickDay=null;
+// 달력에서 고른 날짜 → 일정 넣기 칸에도 같은 날짜
+function linkForm(day){ if(editId) endEdit(true); pickDay=day; $("fFrom").value=day; $("fTo").value=""; syncExisting(); }
+function whenTxt(it){return (it.rep&&it.rep.length)?'매주 '+it.rep.map(w=>WD[w]).join('·')+(it.to?' ('+md(it.to)+'까지)':''):(it.to&&it.to!==it.from?md(it.from)+'~'+md(it.to):md(it.from))}
+function rangeTxt(it){const r=it.ranges; return (r.length===1&&r[0][0]<=DS&&r[0][1]>=DE)?'종일':r.map(x=>hm(x[0])+'~'+hm(x[1])).join(', ')}
+// 이름·날짜를 고르면 그 사람의 그날 일정을 불러옴
+function syncExisting(){
+ const box=$("fExist"); const day=pickDay||$("fFrom").value;
+ if(F.multi){box.style.display="none";return;}
+ if(!F.who||!day||$("fUndated").checked){box.style.display="none";return;}
+ const list=itemsOn(DB.items,day).filter(it=>it.who===F.who);
+ box.style.display="block";
+ if(!list.length){ if(editId) endEdit(true); box.innerHTML=NM(F.who)+' · '+md(day)+' — 이미 있는 일정 없음 (새로 넣기)'; return; }
+ if(!editId||!list.some(x=>x.id===editId)) startEdit(list[list.length-1],true);
+ box.innerHTML='<b>'+NM(F.who)+' · '+md(day)+'에 이미 있는 일정</b> (누르면 아래에 불러옴)<br>'+
+  list.map(it=>'<span class="eb'+(it.id===editId?' on':'')+'" data-edit="'+it.id+'">'+it.kind+' '+rangeTxt(it)+' · '+whenTxt(it)+'</span>').join('')+
+  '<span class="eb" data-newitem="1">+ 새 일정 따로 넣기</span>';
+}
+function startEdit(it,quiet){
+ if(F.multi) setMulti(false);
+ if(!quiet) pickDay=null; else pickDay=pickDay||$("fFrom").value;
+ editId=it.id; F.who=it.who; F.kind=it.kind; F.rep=(it.rep||[]).slice();
+ const r=it.ranges;
+ if(r.length===1&&r[0][0]<=DS&&r[0][1]>=DE){F.mode="full"}
+ else if(r.length===1){F.mode="away";$("fT1").value=r[0][0];$("fT2").value=r[0][1]}
+ else {F.mode="work";$("fT1").value=r[0][1];$("fT2").value=r[1][0]}
+ $("fFrom").value=it.from||""; $("fTo").value=it.to||""; $("fMemo").value=it.memo||""; $("fUndated").checked=!it.from;
+ ["fWho","fKind","fRep","fMode"].forEach((e,i)=>paint(e,["who","kind","rep","mode"][i])); timeUI();
+ $("saveBtn").textContent="수정 저장"; $("cancelEdit").style.display="inline-block"; $("editBtns").style.display="flex"; const multi=(it.rep&&it.rep.length)||(it.to&&it.to!==it.from); $("skipDayBtn").style.display=multi?"block":"none"; $("skipDayBtn").textContent=md(pickDay||$("fFrom").value)+"만 지우기";
+ if(multi){ $("skipDayBtn").style.cssText="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff;display:block"; $("delEditBtn").textContent="반복 전체 지우기"; $("delEditBtn").style.cssText="flex:0 0 auto;margin:0;border-color:#c5ccd8;background:#fff;color:#7a869c;font-size:12px;padding:8px 10px"; }
+ else { $("delEditBtn").textContent="이 일정 삭제"; $("delEditBtn").style.cssText="flex:1;margin:0;border-color:var(--red);background:var(--red);color:#fff"; }
+ $("formCard").querySelector("h2").textContent="일정 수정 중 — "+NM(it.who)+" "+it.kind+((it.rep&&it.rep.length)?" (매주 반복 · 날짜 칸 = 반복 기간)":"");
+ if(!quiet){ goTab("add"); goSub("form"); window.scrollTo(0,0); }
+ if(!quiet) syncExisting();
+}
+function endEdit(keep){editId=null; $("editBtns").style.display="none"; if(!keep){} F.kind=null;F.rep=[];F.mode="full";$("fTo").value="";$("fMemo").value=""; if(pickDay){$("fFrom").value=pickDay} ["fKind","fRep","fMode"].forEach((e,i)=>paint(e,["kind","rep","mode"][i])); timeUI();$("saveBtn").textContent="저장 (팀 모두에게 바로 보임)";$("cancelEdit").style.display="none";$("formCard").querySelector("h2").textContent="일정 넣기"}
+async function save(){
+ if(F.multi) return saveMulti();
+ const und=$("fUndated").checked;
+ if(!F.who) return toast("이름을 고르세요");
+ if(!F.kind) return toast("종류를 고르세요");
+ const from=$("fFrom").value, to=$("fTo").value;
+ if(!und&&!from) return toast("날짜를 넣으세요");
+ if(!und&&to&&to<from) return toast("끝날짜가 시작일보다 빠릅니다");
+ const t1=+$("fT1").value,t2=+$("fT2").value;
+ let ranges=FULL.map(r=>r.slice());
+ if(F.mode!=="full"){ if(t2<=t1) return toast("시간을 확인하세요");
+  ranges=F.mode==="away"?[[t1,t2]]:[[0,t1],[t2,1440]].filter(r=>r[1]>r[0]); }
+ const it={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),who:F.who,kind:F.kind,
+  from:und?"":from,to:und?"":(to||""),rep:und?[]:F.rep.slice().sort(),ranges,memo:$("fMemo").value.trim()};
+ $("saveBtn").disabled=true;
+ const eid=editId;
+ try{await mutate(db=>{ if(eid){const k=db.items.findIndex(x=>x.id===eid); if(k>=0){it.id=eid; it.skip=db.items[k].skip; db.items[k]=it} else db.items.push(it)} else db.items.push(it) }); toast(eid?"수정했습니다":"저장했습니다"); endEdit(); syncExisting(); $("fMemo").value=""; $("fTo").value=""; F.rep=[]; paint("fRep","rep"); $("fUndated").checked=false;}
+ catch(e){toast("저장 안 됨: "+e.message)}
+ $("saveBtn").disabled=false;
+}
+// ===== 팀원·팀 이름 바뀌면 화면 다시 맞춤 =====
+function peopleChanged(){
+ $("teamTitle").textContent=TEAM+" 일정보드"; document.title=TEAM+" 일정보드";
+ if(F.who&&!PEOPLE.includes(F.who)) F.who=null;
+ if(!F.who){ try{const me=localStorage.getItem(LS("me")); if(me&&PEOPLE.includes(me)) F.who=me}catch(e){} }
+ chips("fWho",PEOPLE,"who",false,NM); paint("fWho","who");
+ const ae=document.activeElement;
+ if(!(ae&&ae.closest&&ae.closest(".ppl"))){
+  $("teamName").value=TEAM; hourOpts("cDS",DS); hourOpts("cDE",DE); $("cMin").value=String(MIN);
+  $("pplList").innerHTML=PPL.map(p=>'<div class="prow" data-pid="'+p.id+'"><input type="text" class="pn" value="'+esc(p.name)+'"><input type="text" class="pl" value="'+esc(p.label||"")+'" placeholder="부를 이름(선택)"><button type="button" class="chip" data-psave="1">저장</button><button type="button" class="x" data-pdel="1">빼기</button></div>').join("");
+ }
+}
+function initExtra(){
+ $("teamSave").onclick=async()=>{const v=$("teamName").value.trim(); if(!v) return toast("팀 이름을 넣으세요");
+  try{await mutate(db=>{db.team=v}); toast("팀 이름을 바꿨습니다")}catch(e){toast("저장 안 됨: "+e.message)}};
+ $("addPpl").onclick=async()=>{const n=$("newName").value.trim(), l=$("newLabel").value.trim();
+  if(!n) return toast("이름을 넣으세요"); if(PEOPLE.includes(n)) return toast("같은 이름이 이미 있습니다");
+  try{await mutate(db=>{ if(db.people.some(x=>x.name===n)) throw new Error("같은 이름이 이미 있음"); const o={id:"p"+Date.now().toString(36),name:n}; if(l) o.label=l; db.people.push(o)});
+   $("newName").value=""; $("newLabel").value=""; document.activeElement&&document.activeElement.blur(); pplSig=""; setPeople(DB); toast(n+" 추가했습니다")}catch(e){toast("저장 안 됨: "+e.message)}};
+ $("pplList").onclick=async e=>{
+  const row=e.target.closest("[data-pid]"); if(!row) return; const pid=row.dataset.pid;
+  const p=PPL.find(x=>x.id===pid); if(!p) return;
+  if(e.target.closest("[data-psave]")){
+   const n=row.querySelector(".pn").value.trim(), l=row.querySelector(".pl").value.trim();
+   if(!n) return toast("이름을 넣으세요");
+   if(PPL.some(x=>x.id!==pid&&x.name===n)) return toast("같은 이름이 이미 있습니다");
+   let old=p.name;
+   try{await mutate(db=>{const t=db.people.find(x=>x.id===pid); if(!t) throw new Error("이미 빠진 사람"); old=t.name; t.name=n; if(l) t.label=l; else delete t.label; db.items.forEach(it=>{if(it.who===old) it.who=n})});
+    if(F.who===old) F.who=n; try{if(localStorage.getItem(LS("me"))===old) localStorage.setItem(LS("me"),n)}catch(e2){}
+    document.activeElement&&document.activeElement.blur(); pplSig=""; setPeople(DB); render(); toast(old===n?"저장했습니다":old+" → "+n+" (일정도 같이 옮김)")}catch(e2){toast("저장 안 됨: "+e2.message)}
+  }
+  if(e.target.closest("[data-pdel]")){
+   if(PPL.length<=1) return toast("마지막 한 명은 뺄 수 없습니다");
+   const cnt=DB.items.filter(it=>it.who===p.name).length;
+   if(!confirm(NM(p.name)+"("+p.name+")을 팀원에서 뺄까요?"+(cnt?"\n이 사람 일정 "+cnt+"건도 같이 지워집니다.":""))) return;
+   try{await mutate(db=>{db.people=db.people.filter(x=>x.id!==pid); db.items=db.items.filter(it=>it.who!==p.name)}); pplSig=""; setPeople(DB); render(); toast("뺐습니다")}catch(e2){toast("저장 안 됨: "+e2.message)}
+  }
+ };
+ // 쪽지
+ $("parseBtn").onclick=()=>{ PASTE=parseMemo($("pasteTxt").value); renderPaste(); };
+ $("pasteOut").addEventListener("change",e=>{const el=e.target.closest("[data-i]"); if(!el) return; const r=PASTE[+el.dataset.i], f=el.dataset.f;
+  if(f==="on") r.on=el.checked; else if(f==="t1"||f==="t2") r[f]=+el.value; else r[f]=el.value;
+  if(f!=="on"){ r.on=true; } renderPaste(); });
+ $("pasteOut").addEventListener("click",e=>{ if(e.target.id==="pasteSave") savePaste(); if(e.target.id==="pasteClear"){PASTE=[];$("pasteTxt").value="";renderPaste();} });
+ // 여러 날
+ $("multiBtn").onclick=()=>setMulti(!F.multi);
+ $("pickBox").onclick=e=>{
+  const nv=e.target.closest("[data-pnav]"); if(nv){pkM+=+nv.dataset.pnav; if(pkM<0){pkM=11;pkY--} if(pkM>11){pkM=0;pkY++} return renderPick();}
+  const c=e.target.closest("[data-pk]"); if(c) return togglePick(c.dataset.pk);
+  if(e.target.closest("[data-pclear]")){F.days=[];renderPick();}
+ };
+}
+
+// ===== 여러 날 골라 넣기 =====
+let pkY=null, pkM=null;
+function setMulti(on){
+ if(on&&editId) endEdit();
+ F.multi=on; if(!on) F.days=[];
+ $("multiBtn").classList.toggle("on",on); $("multiBtn").textContent=on?"📅 여러 날 고르는 중 (끄기)":"📅 여러 날 골라 넣기";
+ $("rangeBox").style.display=on?"none":"flex"; $("repRow").style.display=on?"none":"flex"; $("undRow").style.display=on?"none":"flex";
+ $("pickBox").style.display=on?"block":"none";
+ if(on){ $("fUndated").checked=false; F.rep=[]; paint("fRep","rep"); const d=parse(ymd(new Date())); if(pkY===null){pkY=d.getFullYear();pkM=d.getMonth();} renderPick(); }
+ $("saveBtn").textContent=on?"고른 날 모두 저장":"저장 (팀 모두에게 바로 보임)";
+ syncExisting();
+}
+function togglePick(s){ if(!isWork(s)||s<ymd(new Date())) return; const i=F.days.indexOf(s); i<0?F.days.push(s):F.days.splice(i,1); F.days.sort(); renderPick(); }
+function renderPick(){
+ if(!F.multi) return; const today=ymd(new Date());
+ let h='<div class="mhead" style="margin-top:4px"><button type="button" class="nav" data-pnav="-1">◀</button><h2 style="font-size:15px">'+pkY+'년 '+(pkM+1)+'월 — '+(F.who?NM(F.who)+' 날짜 고르기':'먼저 이름을 고르세요')+'</h2><button type="button" class="nav" data-pnav="1">▶</button></div><div class="cal">';
+ h+="월화수목금".split("").map(w=>'<div class="wh">'+w+'</div>').join("");
+ const first=new Date(pkY,pkM,1), last=new Date(pkY,pkM+1,0); let lead=(first.getDay()+6)%7; if(lead>4) lead=0;
+ for(let i=0;i<lead;i++) h+='<div></div>';
+ for(let d=1;d<=last.getDate();d++){ const dt=new Date(pkY,pkM,d), w=dt.getDay(); if(w===0||w===6) continue; const s=ymd(dt);
+  const dis=s<today||!!HOL[s]; const has=F.who&&!dis&&itemsOn(DB.items,s).some(it=>it.who===F.who);
+  h+='<button type="button" class="pk'+(dis?' dis':'')+(HOL[s]?' hol':'')+(F.days.includes(s)?' on':'')+(has?' has':'')+'" '+(dis?'':'data-pk="'+s+'"')+'>'+d+'</button>'; }
+ h+='</div><div class="hint" style="margin-top:6px">누른 날 = 남색 · 주황 점 = 이미 일정 있는 날 · 위 큰 달력을 눌러도 골라집니다</div>';
+ h+='<div style="margin-top:6px;font-size:14px"><b>고른 날 '+F.days.length+'일</b> '+F.days.map(md).join(", ")+(F.days.length?' <button type="button" class="x" data-pclear="1">모두 취소</button>':'')+'</div>';
+ $("pickBox").innerHTML=h; updWarn();
+}
+// 이어지는 근무일은 한 덩어리(○~○일)로 저장
+function toRuns(days){ const ds=[...new Set(days)].sort(); const runs=[];
+ ds.forEach(s=>{ const r=runs[runs.length-1]; if(r){ let n=addD(parse(r[r.length-1]),1); while(!isWork(ymd(n))&&ymd(n)<s) n=addD(n,1); if(ymd(n)===s){r.push(s);return;} } runs.push([s]); });
+ return runs; }
+function curRanges(){ const t1=+$("fT1").value,t2=+$("fT2").value; if(F.mode==="full") return FULL.map(r=>r.slice()); if(t2<=t1) return null; return F.mode==="away"?[[t1,t2]]:[[0,t1],[t2,1440]].filter(r=>r[1]>r[0]); }
+async function saveMulti(){
+ if(!F.who) return toast("이름을 고르세요"); if(!F.kind) return toast("종류를 고르세요");
+ if(!F.days.length) return toast("날짜를 눌러 고르세요");
+ const ranges=curRanges(); if(!ranges) return toast("시간을 확인하세요");
+ const runs=toRuns(F.days), memo=$("fMemo").value.trim();
+ const items=runs.map((r,k)=>({id:Date.now().toString(36)+k+Math.random().toString(36).slice(2,5),who:F.who,kind:F.kind,from:r[0],to:r.length>1?r[r.length-1]:"",rep:[],ranges:JSON.parse(JSON.stringify(ranges)),memo}));
+ $("saveBtn").disabled=true;
+ try{await mutate(db=>{db.items.push(...items)}); toast(NM(F.who)+" "+F.kind+" "+F.days.length+"일 저장했습니다"); F.days=[]; $("fMemo").value=""; renderPick();}
+ catch(e){toast("저장 안 됨: "+e.message)}
+ $("saveBtn").disabled=false;
+}
+
+// ===== 쪽지 읽기 =====
+const KIND_RULES=[
+ [/오전\s*반\s*(?:차|가|일)|오전반/,"반차",[[540,840]]],
+ [/오후\s*반\s*(?:차|가|일)|오후반/,"반차",[[840,1080]]],
+ [/반차|반가|반일\s*연가/,"반차",null],
+ [/대체\s*휴무|대휴/,"대체휴무"],
+ [/특별\s*휴가|특휴|경조/,"특별휴가"],
+ [/육아\s*시간|육아/,"육아시간"],
+ [/공가/,"공가"],[/병가/,"병가"],
+ [/교육|연수|워크숍|워크샵/,"교육"],[/출장/,"출장"],
+ [/외출|조퇴|지각|병원/,"외출"],
+ [/연가|휴가|연차|휴무|쉼|쉽니다|쉬어/,"연가"],
+ [/기타|회의|행사/,"기타"]];
+const WDS="(?:\\s*\\(\\s*[월화수목금토일]\\s*\\)|\\s*[월화수목금토일]요일)?";
+const MDS="(\\d{1,2})\\s*(?:[\\/.]|월)\\s*(\\d{1,2})\\s*일?";
+const SEP="\\s*(?:[~\\-–]|부터)\\s*";
+const HMS="(오전|오후)?\\s*(\\d{1,2})(?:\\s*:\\s*(\\d{2})|\\s*시(?!간)(?:\\s*(반|\\d{1,2}\\s*분))?)";
+const HMO="(오전|오후)?\\s*(\\d{1,2})(?:\\s*:\\s*(\\d{2})|\\s*시(?!간)(?:\\s*(반|\\d{1,2}\\s*분))?)?";
+const TRANGE=new RegExp(HMO+"\\s*(?:[~\\-–]|부터)\\s*"+HMS);
+const TONE=new RegExp(HMS+"\\s*(이후|부터|퇴근|조퇴|까지|출근|이전|전)?");
+function toMin(ap,h,mm,ex){ h=+h; let m=mm?+mm:0; if(ex) m=ex==="반"?30:parseInt(ex);
+ if(ap==="오후"&&h<12) h+=12; else if(!ap&&h>=1&&h<=7) h+=12; return Math.min(DE,Math.max(DS,h*60+m)); }
+function findDates(S,base){
+ const Y=base.getFullYear(), M=base.getMonth(), D=base.getDate();
+ const mdDate=(mo,d)=>{ if(mo<1||mo>12) return null; let a=new Date(Y,mo-1,d); if(a.getDate()!==d) return null; if(a<addD(base,-60)) a=new Date(Y+1,mo-1,d); return a; };
+ const dDate=d=>{ if(d<1||d>31) return null; let a=new Date(Y,M+(d<D?1:0),d); return a.getDate()===d?a:null; };
+ const after=(a,d)=>{ let b=new Date(a.getFullYear(),a.getMonth(),d); if(b<a) b=new Date(a.getFullYear(),a.getMonth()+1,d); return b.getDate()===d?b:null; };
+ const one=a=>a?{from:ymd(a),to:""}:null, two=(a,b)=>(a&&b&&b>=a)?{from:ymd(a),to:ymd(b)}:null;
+ const mon=addD(base,-((base.getDay()+6)%7));
+ const wd=(pre,c)=>{ const w="월화수목금".indexOf(c)+1; if(pre&&/다음|담|차/.test(pre)) return addD(mon,7+w-1); if(pre) return addD(mon,w-1); return addD(base,(w-base.getDay()+7)%7); };
+ const P=[
+  [new RegExp(MDS+WDS+SEP+"(?:(\\d{1,2})\\s*(?:[\\/.]|월)\\s*)?(\\d{1,2})\\s*일?(?![\\d:시])"+WDS,"g"),m=>{const a=mdDate(+m[1],+m[2]); if(!a) return null; return two(a,m[3]?mdDate(+m[3],+m[4]):after(a,+m[4]))}],
+  [new RegExp(MDS+"(?![\\d:시])"+WDS,"g"),m=>one(mdDate(+m[1],+m[2]))],
+  [new RegExp("(\\d{1,2})\\s*일?"+WDS+SEP+"(\\d{1,2})\\s*일"+WDS,"g"),m=>{const a=dDate(+m[1]); return a?two(a,after(a,+m[2])):null}],
+  [new RegExp("(\\d{1,2})\\s*일(?![가-힣])"+WDS,"g"),m=>one(dDate(+m[1]))],
+  [/(\d{1,2})(?=\s*[,，、·]\s*\d{1,2}\s*(?:일|[,，、·]))/g,m=>one(dDate(+m[1]))],
+  [/오늘|내일|모레/g,m=>one(addD(base,["오늘","내일","모레"].indexOf(m[0])))],
+  [/(다음\s*주|담주|차주|이번\s*주|금주)?\s*([월화수목금])요일/g,m=>one(wd(m[1],m[2]))],
+  [/(다음\s*주|담주|차주|이번\s*주|금주)\s*([월화수목금])(?![가-힣])/g,m=>one(wd(m[1],m[2]))]];
+ const hits=[];
+ P.forEach(([re,f])=>{ re.lastIndex=0; let m; while((m=re.exec(S))){ const r=f(m); if(r) hits.push({i:m.index,len:m[0].length,res:r}); if(m[0].length===0) re.lastIndex++; } });
+ hits.sort((a,b)=>a.i-b.i||b.len-a.len);
+ const out=[]; let end=-1; hits.forEach(h=>{ if(h.i>=end){out.push(h); end=h.i+h.len;} }); return out;
+}
+function analyze(t){
+ const r={kind:null,kr:null,tr:null,tw:null};
+ for(const [re,k,rg] of KIND_RULES){ if(re.test(t)){ r.kind=k; r.kr=rg||null; break; } }
+ let m=t.match(TRANGE);
+ if(m){ const a=toMin(m[1],m[2],m[3],m[4]), b=toMin(m[5]||m[1],m[6],m[7],m[8]); if(b>a) r.tr=[[a,b]]; else r.tw="시간 확인"; }
+ else if((m=t.match(TONE))){ const a=toMin(m[1],m[2],m[3],m[4]), dir=m[5]||"";
+  if(/까지|출근|전/.test(dir)) r.tr=[[DS,a]]; else { r.tr=[[a,DE]]; if(!/이후|부터|퇴근|조퇴/.test(dir)) r.tw="끝나는 시간 확인"; } }
+ return r;
+}
+function aliasList(){ const L=[]; PPL.forEach(p=>{ [p.name,p.label,(p.label||"").replace(/님$/,""),p.name.length===3?p.name.slice(1):null].forEach(a=>{ if(a&&a.length>=2&&!L.some(x=>x.a===a)) L.push({a,who:p.name}); }); }); return L.sort((x,y)=>y.a.length-x.a.length); }
+function parseMemo(txt,baseDate){
+ const base=parse(ymd(baseDate||new Date())), today=ymd(base), AL=aliasList(); const rows=[]; let lastWho=null, ctx=null;
+ txt.split(/\r?\n/).forEach(raw=>{
+  const line=raw.trim(); if(!line) return;
+  const hits=[]; for(let i=0;i<line.length;){ const al=AL.find(x=>line.startsWith(x.a,i)); if(al){ let len=al.a.length; if(line[i+len]==="님") len++; hits.push({i,len,who:al.who}); i+=len; } else i++; }
+  if(!hits.length){ const tk=findDates(line,base); if(tk.length&&!analyze(line).kind){ ctx=tk; return; } }
+  // 사람별로 나누기 ("은우, 가인 24일 교육" → 두 사람 같은 일정)
+  const groups=[]; let pend=[];
+  if(!hits.length) groups.push({whos:lastWho?[lastWho]:[null],text:line});
+  hits.forEach((h,k)=>{ const text=line.slice(h.i+h.len,k+1<hits.length?hits[k+1].i:line.length); pend.push(h.who);
+   if(!/[가-힣A-Za-z0-9]/.test(text.replace(/와|과|랑|및|하고/g,""))&&k+1<hits.length) return;
+   groups.push({whos:pend,text:(k===0?line.slice(0,h.i)+" ":"")+text}); pend=[]; });
+  groups.forEach(g=>parseSeg(g.text,ctx,base,today).forEach(x=>g.whos.forEach(w=>rows.push({...x,who:w||"",src:line,warn:x.warn.slice().concat(w?[]:["이름 고르기"])}))));
+  const lg=groups[groups.length-1]; if(lg&&lg.whos[lg.whos.length-1]) lastWho=lg.whos[lg.whos.length-1];
+ });
+ rows.forEach(r=>{ const dup=DB.items.some(x=>x.who===r.who&&x.kind===r.kind&&x.from===r.from&&(x.to||"")===(r.to||"")&&rangeKey(x.ranges)===rangeKey([[r.t1,r.t2]]));
+  if(dup) r.warn.push("이미 들어가 있음"); r.on=!!(r.who&&r.kind&&r.from)&&!dup&&!r.warn.some(w=>/확인|고르기/.test(w)); });
+ return rows;
+}
+function parseSeg(S,ctx,base,today){
+ let rep=[]; const rm=S.match(/매주\s*((?:[월화수목금](?:요일)?\s*[,·、및]?\s*)+)/);
+ if(rm){ rep=[...new Set([...rm[1]].map(c=>"월화수목금".indexOf(c)+1).filter(x=>x>0))].sort(); S=S.replace(rm[0]," "); }
+ const toks=findDates(S,base);
+ const prefix=toks.length?S.slice(0,toks[0].i):"";
+ const chunks=toks.length?toks.map((t,k)=>({res:t.res,text:S.slice(t.i+t.len,k+1<toks.length?toks[k+1].i:S.length)})):[{res:null,text:S}];
+ const P=analyze(prefix); chunks.forEach(c=>c.a=analyze(c.text));
+ chunks.forEach((c,k)=>{ const a=c.a, src=[];
+  if(!/[가-힣A-Za-z0-9]/.test(c.text)){ const nx=chunks.slice(k+1).find(x=>x.a.kind||x.a.tr); if(nx) src.push(nx.a); }
+  const own=!!a.kind; src.push(P); if(k>0) src.push(chunks[k-1].a);
+  src.forEach(s=>{ if(!a.kind&&s.kind){a.kind=s.kind; a.kr=a.kr||s.kr;}
+   // 시간은 자기 종류가 따로 있으면(예: 27일 오후반차) 앞 칸에서 물려받지 않음
+   if(!a.tr&&!a.kr&&s.tr&&(!own||s===P)){a.tr=s.tr; a.tw=a.tw||s.tw;} }); });
+ const out=[];
+ chunks.forEach(c=>{ const a=c.a; const dl=c.res?[c.res]:((ctx&&!rep.length)?ctx.map(t=>t.res):[]);
+  if(!a.kind&&!dl.length) return;
+  (dl.length?dl:[{from:rep.length?today:"",to:""}]).forEach(d=>{
+   const warn=[]; let rg=a.tr||a.kr;
+   if(!a.kind) warn.push("종류 고르기");
+   if(!d.from) warn.push("날짜 고르기");
+   if(a.tw) warn.push(a.tw);
+   if(!rg&&a.kind==="반차"){ rg=[[540,840]]; warn.push("오전·오후 확인"); }
+   if(!rg&&(a.kind==="육아시간"||a.kind==="외출")) warn.push("시간 확인");
+   rg=rg||[[DS,DE]];
+   if(d.from&&(d.to||d.from)<today) warn.push("지난 날짜");
+   out.push({kind:a.kind||"",from:d.from,to:d.to||"",rep:rep.slice(),t1:rg[0][0],t2:rg[0][1],warn});
+  }); });
+ return out;
+}
+let PASTE=[];
+function tOpts(v){ let o="",vs=[]; for(let m=DS;m<=DE;m+=30) vs.push(m); if(!vs.includes(v)) vs.push(v); vs.sort((a,b)=>a-b); vs.forEach(m=>o+='<option value="'+m+'"'+(m===v?' selected':'')+'>'+hm(m)+'</option>'); return o; }
+function renderPaste(){
+ if(!PASTE.length){ $("pasteOut").innerHTML=$("pasteTxt").value.trim()?'<div class="none" style="margin-top:8px">읽은 일정이 없습니다. 이름·날짜·종류(예: 은우 24일 연가)가 들어 있는지 봐 주세요.</div>':''; return; }
+ const n=PASTE.filter(r=>r.on).length;
+ const pit=PASTE.filter(r=>r.on&&r.who&&r.kind&&r.from&&r.t2>r.t1).map(r=>({id:"_new",who:r.who,kind:r.kind,from:r.from,to:(r.to&&r.to!==r.from)?r.to:"",rep:r.rep.slice(),ranges:[[r.t1,r.t2]]}));
+ const pw=warnHTML(gapWarn(pit,null));
+ $("pasteOut").innerHTML='<div class="hint" style="margin-top:8px">읽은 결과 '+PASTE.length+'건 — 빨간 글씨는 확인 필요. 고치면 자동 체크됩니다.</div>'+PASTE.map((r,i)=>
+  '<div class="pr'+(r.on?'':' off')+'"><div class="row"><input type="checkbox" data-i="'+i+'" data-f="on"'+(r.on?' checked':'')+'>'+
+  '<select data-i="'+i+'" data-f="who"><option value="">이름?</option>'+PEOPLE.map(p=>'<option value="'+esc(p)+'"'+(p===r.who?' selected':'')+'>'+esc(NM(p))+'</option>').join("")+'</select>'+
+  '<select data-i="'+i+'" data-f="kind"><option value="">종류?</option>'+KINDS.map(k=>'<option'+(k===r.kind?' selected':'')+'>'+k+'</option>').join("")+'</select>'+
+  (r.rep.length?'<b style="font-size:13px">매주 '+r.rep.map(w=>WD[w]).join("·")+'</b>':'')+'</div>'+
+  '<div class="row"><input type="date" data-i="'+i+'" data-f="from" value="'+r.from+'"> ~ <input type="date" data-i="'+i+'" data-f="to" value="'+r.to+'"></div>'+
+  '<div class="row"><select data-i="'+i+'" data-f="t1">'+tOpts(r.t1)+'</select> ~ <select data-i="'+i+'" data-f="t2">'+tOpts(r.t2)+'</select><span class="hint">'+(r.t1===DS&&r.t2===DE?'종일':'자리 비움')+'</span></div>'+
+  '<div class="src">쪽지: '+esc(r.src)+'</div>'+(r.warn.length?'<div class="wn">⚠ '+r.warn.join(" · ")+'</div>':'')+'</div>').join("")+
+  '<div class="gapw'+(pw?' show':'')+'" style="margin-top:10px">'+pw+'</div><div class="row" style="margin-top:10px"><button type="button" class="save" id="pasteSave" style="flex:1"'+(n?'':' disabled')+'>체크한 '+n+'건 저장</button><button type="button" class="more" id="pasteClear" style="width:auto;margin:0">비우기</button></div>';
+}
+async function savePaste(){
+ const sel=PASTE.filter(r=>r.on);
+ for(const r of sel){ if(!r.who||!r.kind||!r.from) return toast("이름·종류·날짜가 빈 줄이 있습니다"); if(r.to&&r.to<r.from) return toast("끝날짜가 시작일보다 빠른 줄이 있습니다"); if(r.t2<=r.t1) return toast("시간이 거꾸로 된 줄이 있습니다"); }
+ const items=sel.map((r,k)=>({id:Date.now().toString(36)+k+Math.random().toString(36).slice(2,5),who:r.who,kind:r.kind,from:r.from,to:(r.to&&r.to!==r.from)?r.to:"",rep:r.rep.slice(),ranges:(r.t1<=DS&&r.t2>=DE)?FULL.map(x=>x.slice()):[[r.t1,r.t2]],memo:""}));
+ try{ await mutate(db=>{db.items.push(...items)}); toast(items.length+"건 저장했습니다"); PASTE=[]; $("pasteTxt").value=""; renderPaste(); }catch(e){toast("저장 안 됨: "+e.message)}
+}
+const _render=render; render=function(){ _render(); if(F.multi) renderPick(); };
+
+// ===== 근무시간 선택칸 =====
+function buildTimeOpts(){
+ let o=""; for(let m=DS;m<=DE;m+=30) o+='<option value="'+m+'">'+hm(m)+'</option>';
+ const a=+$("fT1").value, b=+$("fT2").value;
+ $("fT1").innerHTML=o; $("fT2").innerHTML=o;
+ $("fT1").value=(a>=DS&&a<=DE)?a:DS; $("fT2").value=(b>=DS&&b<=DE)?b:DE;
+}
+function hourOpts(el,v){ let o=""; for(let m=360;m<=1320;m+=30) o+='<option value="'+m+'"'+(m===v?' selected':'')+'>'+hm(m)+'</option>'; $(el).innerHTML=o; }
+const rangeKey=r=>JSON.stringify((r||[]).map(x=>[Math.max(DS,x[0]),Math.min(DE,x[1])]));
+
+// ===== 저장 전 경고: 이 일정을 넣으면 인원이 모자라는 때 =====
+function gapWarn(newItems,replaceId){
+ const today=ymd(new Date()), base=DB.items.filter(x=>x.id!==replaceId), after=base.concat(newItems), days=new Set();
+ newItems.forEach(it=>{ if(!it.from) return; let end=it.to||((it.rep&&it.rep.length)?ymd(addD(parse(it.from),62)):it.from);
+  if(it.rep&&it.rep.length&&it.to&&it.to>ymd(addD(parse(it.from),62))) end=ymd(addD(parse(it.from),62));
+  for(let d=parse(it.from);ymd(d)<=end;d=addD(d,1)){ const s=ymd(d); if(s>=today&&isWork(s)) days.add(s); } });
+ const out=[];
+ [...days].sort().forEach(s=>{ const A=dayInfo(after,s), B=dayInfo(base,s);
+  A.segs.forEach(g=>{ const n=g.inP.length; if(n>=MIN) return; const mid=(g.a+g.b)/2, bs=B.segs.find(x=>x.a<=mid&&mid<x.b); if(bs&&bs.inP.length<=n) return; out.push({s,g}); }); });
+ return out;
+}
+function warnHTML(w){ if(!w.length) return "";
+ return '<b>⚠ 넣으면 인원이 모자랍니다</b> (저장은 됩니다)<br>'+w.slice(0,5).map(x=>md(x.s)+' '+hm(x.g.a)+'~'+hm(x.g.b)+' — '+lowTxt(x.g)).join('<br>')+(w.length>5?'<br>외 '+(w.length-5)+'건':''); }
+function formItems(){
+ if(!F.who||!F.kind) return null; const ranges=curRanges(); if(!ranges) return null;
+ if(F.multi) return toRuns(F.days).map(r=>({id:"_new",who:F.who,kind:F.kind,from:r[0],to:r.length>1?r[r.length-1]:"",rep:[],ranges}));
+ if($("fUndated").checked) return null; const from=$("fFrom").value, to=$("fTo").value; if(!from||(to&&to<from)) return null;
+ return [{id:"_new",who:F.who,kind:F.kind,from,to:to||"",rep:F.rep.slice(),ranges}];
+}
+function updWarn(){ const box=$("fWarn"); const its=formItems(); const w=its?gapWarn(its,editId):[]; box.innerHTML=warnHTML(w); box.classList.toggle("show",w.length>0); }
+
+// ===== 탭 =====
+let TAB="today";
+function goTab(t){ TAB=t; document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===t)); document.querySelectorAll("[data-go-tab]").forEach(b=>b.classList.toggle("on",b.dataset.goTab===t)); }
+function goSub(v){ document.querySelectorAll("[data-sub]").forEach(b=>b.classList.toggle("on",b.dataset.sub===v)); document.querySelectorAll("[data-subp]").forEach(x=>x.style.display=x.dataset.subp===v?"block":"none"); if(v==="form") updWarn(); }
+function showApp(){ $("welcome").style.display="none"; $("pwBox").style.display="none"; $("app").style.display="block"; $("tabbar").style.display="flex"; }
+
+// ===== 암호 =====
+function askPw(msg){ $("app").style.display="none"; $("tabbar").style.display="none"; $("pwBox").style.display="block"; $("sync").textContent="🔒 잠김"; $("pwMsg").textContent=msg||"이 일정보드는 팀 암호로 잠겨 있습니다. 팀원에게 받은 암호를 넣어 주세요."; }
+async function usePw(pw,remember){ KEY=await mkKey(pw); if(remember) try{localStorage.setItem(LS("pw"),pw)}catch(e){} }
+function inviteLink(){ const pw=(()=>{try{return localStorage.getItem(LS("pw"))||""}catch(e){return ""}})();
+ return location.origin+location.pathname+(BIN===OUR_BIN?"":"?b="+BIN)+(pw?"#k="+encodeURIComponent(pw):""); }
+function renderSec(){
+ const link=inviteLink();
+ let h='<div class="hint" style="margin-bottom:6px">팀원에게 이 링크를 보내면 바로 열립니다'+(ENC?' (암호 포함 — 팀 단톡방에만 보내세요)':'')+'.</div>'+
+  '<div class="row"><input type="text" id="invLink" readonly value="'+esc(link)+'"><button type="button" class="chip" id="invCopy">복사</button></div>';
+ h+=ENC?'<p class="hint">🔒 이 보드는 팀 암호로 잠겨(암호화) 있습니다. 링크만으로는 내용을 볼 수 없습니다.</p>'
+  :'<p class="hint" style="color:#c4282d">⚠ 이 보드는 암호가 없습니다. 저장소 주소를 아는 사람은 일정을 볼 수 있습니다.</p><div class="row"><input type="text" id="setPw" placeholder="새 팀 암호 (4글자 이상)"><button type="button" class="chip" id="setPwBtn">암호 걸기</button></div><p class="hint">암호를 걸면 팀원 모두 새 초대 링크로 다시 열어야 합니다.</p>';
+ h+='<p class="hint">이 기기 저장본: 저장소가 깨지거나 누가 지워도 아래 버튼으로 이 기기에 남은 마지막 내용을 되살릴 수 있습니다.</p><button type="button" class="chip" id="restoreBtn">이 기기 저장본으로 되살리기</button>';
+ $("secBox").innerHTML=h;
+}
+
+// ===== 새 팀 만들기 =====
+async function makeBoard(){
+ const team=$("wTeam").value.trim(), pw=$("wPw").value.trim(), ds=+$("wDS").value, de=+$("wDE").value;
+ const names=$("wPeople").value.split(/[\n,，、]+/).map(x=>x.trim()).filter(Boolean);
+ if(!team) return toast("팀 이름을 넣으세요"); if(!names.length) return toast("팀원 이름을 넣으세요");
+ if(new Set(names).size!==names.length) return toast("같은 이름이 두 번 있습니다");
+ if(de<=ds) return toast("근무시간을 확인하세요"); if(pw.length<4) return toast("팀 암호는 4글자 이상");
+ $("wMake").disabled=true; $("wMake").textContent="만드는 중…";
+ try{
+  const r=await fetch("https://www.npoint.io/documents",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+  const j=await r.json(); if(!j.token) throw new Error("칸 만들기 실패");
+  BIN=j.token; API="https://api.npoint.io/"+BIN; await usePw(pw,true);
+  const db={team,people:names.map((n,i)=>({id:"p"+(i+1),name:n})),items:[],cfg:{ds,de,min:2}};
+  await putRemote(db);
+  history.replaceState(null,"",location.pathname+"?b="+BIN);
+  DB=db; applyCfg(db); setPeople(db); showApp(); render(); goTab("set"); renderSec();
+  toast("만들었습니다! 아래 초대 링크를 팀원에게 보내세요");
+ }catch(e){ toast("만들기 실패: "+e.message+" (인터넷 차단 여부 확인)"); }
+ $("wMake").disabled=false; $("wMake").textContent="우리 팀 보드 만들기";
+}
+
+// ===== 시작 =====
+async function boot(){
+ init();
+ document.querySelectorAll("[data-go-tab]").forEach(b=>b.onclick=()=>{goTab(b.dataset.goTab); if(b.dataset.goTab==="set") renderSec(); window.scrollTo(0,0);});
+ document.querySelectorAll("[data-sub]").forEach(b=>b.onclick=()=>goSub(b.dataset.sub));
+ $("formCard").addEventListener("change",()=>setTimeout(updWarn,0));
+ $("addThisDay").onclick=()=>{ if(!selDay) return; if(F.multi) setMulti(false); linkForm(selDay); goTab("add"); goSub("form"); window.scrollTo(0,0); };
+ $("pwGo").onclick=async()=>{ const pw=$("pwIn").value; if(!pw) return; await usePw(pw,true); $("pwIn").value=""; load(); };
+ $("pwIn").addEventListener("keydown",e=>{if(e.key==="Enter") $("pwGo").click();});
+ $("wMake").onclick=makeBoard; hourOpts("wDS",540); hourOpts("wDE",1080);
+ $("cfgSave").onclick=async()=>{ const ds=+$("cDS").value, de=+$("cDE").value, mn=+$("cMin").value; if(de<=ds) return toast("근무시간을 확인하세요");
+  try{await mutate(db=>{db.cfg={ds,de,min:mn}}); toast("근무 기준을 저장했습니다")}catch(e){toast("저장 안 됨: "+e.message)} };
+ $("secBox").addEventListener("click",async e=>{
+  if(e.target.id==="invCopy"){ const t=$("invLink"); t.select(); try{await navigator.clipboard.writeText(t.value)}catch(e2){document.execCommand("copy")} toast("링크를 복사했습니다"); }
+  if(e.target.id==="setPwBtn"){ const pw=$("setPw").value.trim(); if(pw.length<4) return toast("4글자 이상 넣으세요");
+   if(!confirm("팀 암호를 걸까요?\n암호를 잊으면 아무도 되찾을 수 없습니다. 팀원 모두 새 초대 링크로 다시 열어야 합니다.")) return;
+   try{ const db=await getRemote(); await usePw(pw,true); await putRemote(db); ENC=true; DB=db; renderSec(); toast("암호를 걸었습니다. 새 초대 링크를 보내세요"); }catch(e2){ KEY=null; toast("실패: "+e2.message); } }
+  if(e.target.id==="restoreBtn"){ let c=null; try{c=JSON.parse(localStorage.getItem(LS())||"null")}catch(e2){}
+   if(!c||!c.items) return toast("이 기기에 저장본이 없습니다");
+   if(!confirm("이 기기에 남은 내용(일정 "+c.items.length+"건)으로 저장소를 덮어쓸까요?")) return;
+   try{ await putRemote(c); toast("되살렸습니다"); load(); }catch(e2){ toast("실패: "+e2.message); } }
+ });
+ if(!BIN){ $("welcome").style.display="block"; $("teamTitle").textContent="팀 일정보드"; $("sync").textContent=""; return; }
+ const hk=new URLSearchParams(location.hash.slice(1)).get("k");
+ if(hk){ await usePw(hk,true); history.replaceState(null,"",location.pathname+location.search); }
+ else { try{const pw=localStorage.getItem(LS("pw")); if(pw) await usePw(pw,false);}catch(e){} }
+ goTab("today"); await load();
+ setInterval(()=>{ if(!document.hidden && !$("pop").classList.contains("show") && $("app").style.display!=="none") load() },30000);
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden && $("app").style.display!=="none") load()});
+}
+boot();
+</script>
+</body>
+</html>
