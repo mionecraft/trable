@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>파일 정리 도우미</title>
+<style>
+:root{--bg:#eaf6f1;--card:#fff;--navy:#1f2f6b;--ink:#20304a;--mut:#6f7c92;--line:#d7e4ee;--acc:#ff6b4a;--ok:#2fa877;--okbg:#dcf5e8;--yelbg:#fff4cc}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding:18px 14px 70px}
+h1{font-size:28px;font-weight:900;color:var(--navy);margin:8px 2px 4px;letter-spacing:-.6px;display:inline-block;
+ text-decoration:underline wavy var(--acc);text-underline-offset:8px;text-decoration-thickness:3px}
+.sub{color:var(--mut);margin:12px 2px 18px;font-size:15px}
+.card{background:var(--card);border:2.5px solid var(--navy);border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:5px 5px 0 #b9d9cc}
+.card h2{margin:0 0 10px;font-size:18px;font-weight:900;color:var(--navy)}
+.card h2 .n{display:inline-block;background:var(--navy);color:#fff;border-radius:50%;width:26px;height:26px;text-align:center;line-height:26px;font-size:14px;margin-right:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+.dl{border:2px solid var(--navy);border-radius:14px;padding:14px;background:#f7fbff}
+.dl h3{margin:0 0 6px;font-size:16px;color:var(--navy)}
+.dl ol{margin:6px 0 0;padding-left:20px;font-size:14px}
+.btn{display:inline-block;border:2px solid var(--navy);background:var(--navy);color:#fff;font-weight:800;font-size:15px;border-radius:12px;padding:10px 16px;cursor:pointer}
+.btn.w{background:#fff;color:var(--navy)}
+.btn.s{font-size:13px;padding:5px 10px;border-radius:9px}
+code{background:#eef2f8;border-radius:6px;padding:2px 6px;font-size:13px;word-break:break-all}
+.note{font-size:13px;color:var(--mut);margin-top:8px}
+.warn{background:var(--yelbg);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px}
+#drop{border:3px dashed var(--navy);border-radius:16px;padding:26px 12px;text-align:center;background:#f4fbf8;font-size:16px;font-weight:700;color:var(--navy);cursor:pointer}
+#drop.on{background:#d6f2e4}
+#drop small{display:block;font-weight:400;color:var(--mut);margin-top:6px;font-size:13px}
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:12px}
+.grp{border:2px solid var(--line);border-radius:12px;padding:10px}
+.grp b{color:var(--navy)}
+.grp .c{float:right;background:var(--okbg);color:#16704b;font-weight:800;border-radius:20px;padding:0 9px;font-size:13px}
+.grp.none{border-color:#f2c9a2;background:#fffaf3}
+.grp.none .c{background:#ffe3c7;color:#9a4b00}
+.grp ul{margin:6px 0 0;padding-left:18px;font-size:13px}
+.grp li{margin:2px 0;word-break:break-all}
+.grp li i{color:var(--mut);font-style:normal;font-size:12px}
+.fix{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
+.fix select,.fix input{font-size:12px;padding:3px;border:1px solid #b8c4d6;border-radius:6px}
+.fix input{width:120px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+th{color:var(--navy);font-size:13px}
+td input{width:100%;font-size:14px;padding:5px;border:1px solid #b8c4d6;border-radius:7px}
+td.ord{white-space:nowrap;width:70px}
+td.ord button{border:1px solid #b8c4d6;background:#fff;border-radius:6px;cursor:pointer;padding:2px 6px}
+td.f{width:28%}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>파일 정리 도우미</h1>
+<p class="sub">다운로드·바탕화면에 쌓인 업무 파일을 이름을 보고 「도서관 업무」 안 업무별 폴더로 한 번에 옮겨요. 옮기기 전에 목록을 보여 주고, 방금 옮긴 건 되돌릴 수 있어요.</p>
+
+<div class="card">
+<h2><span class="n">1</span>프로그램 받기</h2>
+<div class="two">
+ <div class="dl">
+  <h3>🪟 윈도우 (업무 PC)</h3>
+  <button class="btn" id="getWin">윈도우용 받기 (파일정리.ahk)</button>
+  <ol>
+   <li>받은 <b>파일정리.ahk</b>를 두 번 클릭 (오토핫키 v2 필요 — 업무 PC엔 이미 있음)</li>
+   <li>처음 한 번만 「도서관 업무」 폴더를 골라 줌</li>
+   <li>목록 확인 → 안 옮길 건 체크 해제 → <b>[체크한 파일 옮기기]</b></li>
+  </ol>
+  <p class="note">줄을 두 번 누르면 보낼 폴더를 바꿀 수 있어요. 잘못 옮겼으면 [방금 옮긴 것 되돌리기].</p>
+ </div>
+ <div class="dl">
+  <h3>🍎 맥 (개인 맥북)</h3>
+  <button class="btn" id="getMac">맥용 받기 (파일정리.sh)</button>
+  <ol>
+   <li>터미널을 열고 아래 한 줄 붙여 넣기<br><code>zsh ~/Downloads/파일정리.sh</code></li>
+   <li>처음 한 번만 「도서관 업무」 폴더를 골라 줌</li>
+   <li>목록 확인 → <b>y</b> 누르면 옮김</li>
+  </ol>
+  <p class="note">되돌리기: <code>zsh ~/Downloads/파일정리.sh 되돌리기</code></p>
+ </div>
+</div>
+<div class="warn">⚠️ 이 화면(웹)에서 바로 옮기지 않고 프로그램을 받는 이유: 크롬은 보안상 웹페이지가 <b>다운로드·바탕화면·문서 폴더 자체</b>를 열지 못하게 막아 둬서, 웹에서는 그 폴더를 정리할 수 없어요. 그래서 실제로 옮기는 일은 PC에서 도는 작은 프로그램이 하고, 이 화면은 규칙 정하기·미리보기를 맡아요.</div>
+<p class="note">규칙(아래 3번)을 고치면 프로그램을 다시 받아 옛 파일에 덮어쓰면 돼요. 바로가기(.lnk)·숨김 파일·받는 중인 파일, 그리고 html·ahk 같은 프로그램 파일(쓰고 있는 도구가 안 열리게 될 수 있어서)은 건드리지 않아요. 규칙에 안 맞는 파일은 그대로 둬요.</p>
+</div>
+
+<div class="card">
+<h2><span class="n">2</span>미리보기 — 어디로 갈지 먼저 보기</h2>
+<div id="drop">다운로드·바탕화면에서 파일을 Ctrl+A로 골라 여기로 끌어다 놓기<small>파일은 읽기만 하고 옮기지 않아요 (여기선 이름만 봐요) · 눌러서 고를 수도 있어요</small></div>
+<input type="file" id="pick" multiple style="display:none">
+<div id="result"></div>
+</div>
+
+<div class="card">
+<h2><span class="n">3</span>정리 규칙 — 파일 이름에 이 말이 있으면 이 폴더로</h2>
+<p class="note" style="margin-top:0">위에서부터 먼저 맞는 규칙으로 가요 (예: 「수시 7-1차 청구기호 검수」 → 청구기호 검수). 띄어쓰기·밑줄 차이는 무시해요. 낱말은 쉼표로 구분.</p>
+<table><thead><tr><th>순서</th><th>보낼 폴더</th><th>이름에 들어 있는 말</th><th></th></tr></thead><tbody id="rules"></tbody></table>
+<div class="row">
+ <button class="btn w s" id="addRule">+ 규칙 추가</button>
+ <button class="btn w s" id="resetRule">기본값으로 되돌리기</button>
+</div>
+</div>
+</div>
+<div id="toast"></div>
+
+<script type="text/plain" id="tplAhk">
+#Requires AutoHotkey v2.0
+#SingleInstance Force
+; 파일 정리 도우미 (윈도우) — 만든 곳: mionecraft.github.io/trable/sort/ (%%DATE%% 규칙)
+; 다운로드·바탕화면의 파일을 이름을 보고 「도서관 업무」 안 업무별 폴더로 옮김
+
+RULES := [
+%%RULES%%
+]
+SKIP_EXT := ",lnk,url,ini,ahk,exe,bat,cmd,html,htm,js,tmp,crdownload,part,download,"
+INI := A_ScriptDir "\파일정리 설정.ini"
+LOGF := A_ScriptDir "\파일정리 기록.txt"
+UNDOF := A_ScriptDir "\파일정리 되돌리기.txt"
+
+global items := [], unmatched := 0, dest := ""
+
+SOURCES := []
+dl := ""
+try dl := RegRead("HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders", "{374DE290-123F-4565-9164-39C4925E467B}")
+if (dl = "")
+    dl := EnvGet("USERPROFILE") "\Downloads"
+SOURCES.Push([dl, "다운로드"])
+SOURCES.Push([A_Desktop, "바탕화면"])
+
+dest := IniRead(INI, "설정", "보낼곳", "")
+if (dest = "" || !DirExist(dest)) {
+    if !AskDest()
+        ExitApp
+}
+
+g := Gui(, "파일 정리 도우미")
+g.SetFont("s10", "맑은 고딕")
+info := g.Add("Text", "w820 r3", "")
+lv := g.Add("ListView", "w820 r20 Checked Grid NoSortHdr", ["파일 이름", "있던 곳", "보낼 폴더"])
+lv.OnEvent("DoubleClick", ChangeFolder)
+btnMove := g.Add("Button", "w210 h38 Default", "체크한 파일 옮기기")
+btnMove.OnEvent("Click", DoMove)
+g.Add("Button", "x+8 w170 h38", "방금 옮긴 것 되돌리기").OnEvent("Click", DoUndo)
+g.Add("Button", "x+8 w100 h38", "새로고침").OnEvent("Click", (*) => Fill())
+g.Add("Button", "x+8 w140 h38", "보낼 곳 바꾸기").OnEvent("Click", (*) => (AskDest() ? Fill() : 0))
+g.Add("Button", "x+8 w150 h38", "보낼 곳 열기").OnEvent("Click", (*) => Run(dest))
+g.OnEvent("Close", (*) => ExitApp())
+Fill()
+g.Show()
+return
+
+AskDest() {
+    global dest
+    MsgBox("정리한 파일을 넣을 「도서관 업무」 폴더를 골라 주세요.`n그 안에 업무별 폴더(수시도서·바로대출 등)가 없으면 새로 만들어요.", "파일 정리 도우미")
+    d := DirSelect("*" (dest != "" ? dest : A_Desktop), 3, "「도서관 업무」 폴더 고르기")
+    if (d = "")
+        return false
+    dest := RTrim(d, "\")
+    IniWrite(dest, INI, "설정", "보낼곳")
+    return true
+}
+
+Norm(s) {
+    s := StrReplace(s, " ", "")
+    s := StrReplace(s, "_", "")
+    s := StrReplace(s, "　", "")
+    s := StrReplace(s, "`t", "")
+    return StrLower(s)
+}
+
+FindFolder(name) {
+    n := Norm(name)
+    for r in RULES {
+        for k in r[2] {
+            kk := Norm(k)
+            if (kk != "" && InStr(n, kk))
+                return r[1]
+        }
+    }
+    return ""
+}
+
+Fill() {
+    global items, unmatched
+    items := [], unmatched := 0
+    lv.Opt("-Redraw")
+    lv.Delete()
+    for src in SOURCES {
+        if !DirExist(src[1])
+            continue
+        Loop Files src[1] "\*", "F" {
+            name := A_LoopFileName
+            ext := StrLower(A_LoopFileExt)
+            if InStr(SKIP_EXT, "," ext ",") || InStr(A_LoopFileAttrib, "H") || InStr(A_LoopFileAttrib, "S")
+                continue
+            if (SubStr(name, 1, 2) = "~$" || SubStr(name, 1, 4) = "파일정리")
+                continue
+            f := FindFolder(name)
+            if (f = "") {
+                unmatched += 1
+                continue
+            }
+            items.Push({path: A_LoopFileFullPath, name: name, where: src[2], folder: f})
+            lv.Add("Check", name, src[2], f)
+        }
+    }
+    lv.ModifyCol(1, 500), lv.ModifyCol(2, 80), lv.ModifyCol(3, 200)
+    lv.Opt("+Redraw")
+    info.Value := "보낼 곳: " dest "`n옮길 파일 " items.Length "개 (체크 해제하면 안 옮김) · 규칙에 안 맞아 그대로 두는 파일 " unmatched "개`n줄을 두 번 누르면 보낼 폴더를 바꿀 수 있어요."
+    btnMove.Text := "체크한 파일 옮기기 (" items.Length ")"
+}
+
+ChangeFolder(ctrl, row) {
+    if (row = 0)
+        return
+    m := Menu()
+    for r in RULES
+        m.Add(r[1], PickFolder.Bind(row, r[1]))
+    m.Show()
+}
+
+PickFolder(row, f, *) {
+    items[row].folder := f
+    lv.Modify(row, "Check", , , f)
+}
+
+UniqueName(dir, name) {
+    SplitPath(name, , , &ext, &base)
+    t := dir "\" name
+    n := 2
+    while FileExist(t) {
+        t := dir "\" base " (" n ")" (ext != "" ? "." ext : "")
+        n += 1
+    }
+    return t
+}
+
+DoMove(*) {
+    moved := 0, fails := "", undo := ""
+    stamp := FormatTime(, "yyyy-MM-dd HH:mm")
+    row := 0
+    Loop {
+        row := lv.GetNext(row, "Checked")
+        if !row
+            break
+        it := items[row]
+        dir := dest "\" it.folder
+        try {
+            if !DirExist(dir)
+                DirCreate(dir)
+            t := UniqueName(dir, it.name)
+            FileMove(it.path, t, 0)
+            moved += 1
+            undo .= it.path "`t" t "`n"
+            FileAppend(stamp "`t" it.path "`t→`t" t "`n", LOGF, "UTF-8")
+        } catch {
+            fails .= "· " it.name "`n"
+        }
+    }
+    if (moved > 0) {
+        try FileDelete(UNDOF)
+        FileAppend(undo, UNDOF, "UTF-8-RAW")
+    }
+    msg := moved "개 옮겼어요."
+    if (fails != "")
+        msg .= "`n`n못 옮긴 파일 (열려 있거나 권한 없음):`n" fails
+    MsgBox(msg, "파일 정리 도우미")
+    Fill()
+}
+
+DoUndo(*) {
+    if !FileExist(UNDOF) {
+        MsgBox("되돌릴 게 없어요.", "파일 정리 도우미")
+        return
+    }
+    back := 0, fails := ""
+    for line in StrSplit(FileRead(UNDOF, "UTF-8-RAW"), "`n", "`r") {
+        if (line = "")
+            continue
+        p := StrSplit(line, "`t")
+        if (p.Length < 2 || !FileExist(p[2]))
+            continue
+        SplitPath(p[1], &fn, &fd)
+        try {
+            if !DirExist(fd)
+                DirCreate(fd)
+            FileMove(p[2], UniqueName(fd, fn), 0)
+            back += 1
+        } catch {
+            fails .= "· " fn "`n"
+        }
+    }
+    FileDelete(UNDOF)
+    MsgBox(back "개를 원래 자리로 돌려놨어요." (fails != "" ? "`n`n못 돌린 파일:`n" fails : ""), "파일 정리 도우미")
+    Fill()
+}
+</script>
+<script type="text/plain" id="tplSh">
+#!/bin/zsh
+# 파일 정리 도우미 (맥) — 만든 곳: mionecraft.github.io/trable/sort/ (%%DATE%% 규칙)
+# 쓰는 법: 터미널에서  zsh ~/Downloads/파일정리.sh   (되돌리기:  zsh ~/Downloads/파일정리.sh 되돌리기)
+
+RULES=(
+%%RULES%%
+)
+CONF="$HOME/.파일정리설정"
+UNDO="$HOME/.파일정리되돌리기"
+LOGF="$HOME/.파일정리기록"
+SOURCES=("$HOME/Downloads|다운로드" "$HOME/Desktop|바탕화면")
+SKIP=" crdownload part download tmp sh command app html htm js webloc "
+
+norm() {
+  local s
+  s=$(print -r -- "$1" | iconv -f UTF-8-MAC -t UTF-8 2>/dev/null)
+  [[ -z "$s" ]] && s="$1"
+  s=${s// /}; s=${s//_/}; s=${s//　/}
+  print -r -- "${(L)s}"
+}
+
+find_folder() {
+  local n k f ks
+  n=$(norm "$1")
+  for r in "${RULES[@]}"; do
+    f=${r%%|*}; ks=${r#*|}
+    for k in "${(@s:,:)ks}"; do
+      k=$(norm "$k")
+      if [[ -n "$k" && "$n" == *"$k"* ]]; then print -r -- "$f"; return 0; fi
+    done
+  done
+  return 1
+}
+
+unique() {
+  local dir=$1 name=$2 base ext t i=2
+  if [[ "$name" == *.* ]]; then base=${name%.*}; ext=".${name##*.}"; else base=$name; ext=""; fi
+  t="$dir/$name"
+  while [[ -e "$t" ]]; do t="$dir/$base ($i)$ext"; i=$((i+1)); done
+  print -r -- "$t"
+}
+
+if [[ "$1" == "되돌리기" ]]; then
+  [[ -f "$UNDO" ]] || { echo "되돌릴 게 없어요."; exit 0; }
+  cnt=0
+  while IFS=$'\t' read -r from to; do
+    [[ -z "$to" || ! -e "$to" ]] && continue
+    mkdir -p "${from:h}"
+    mv -n -- "$to" "$(unique "${from:h}" "${from:t}")" && cnt=$((cnt+1))
+  done < "$UNDO"
+  rm -f "$UNDO"
+  echo "${cnt}개를 원래 자리로 돌려놨어요."
+  exit 0
+fi
+
+DEST=""
+[[ -f "$CONF" ]] && DEST=$(<"$CONF")
+if [[ -z "$DEST" || ! -d "$DEST" ]]; then
+  echo "정리한 파일을 넣을 「도서관 업무」 폴더를 골라 주세요 (창이 떠요)."
+  DEST=$(osascript -e 'POSIX path of (choose folder with prompt "「도서관 업무」 폴더 고르기")' 2>/dev/null)
+  [[ -z "$DEST" ]] && { echo "폴더를 안 골라서 그만둘게요."; exit 1; }
+  DEST=${DEST%/}
+  print -r -- "$DEST" > "$CONF"
+fi
+
+typeset -a P W F
+none=0
+for s in "${SOURCES[@]}"; do
+  dir=${s%%|*}; label=${s#*|}
+  [[ -d "$dir" ]] || continue
+  for p in "$dir"/*(N.); do
+    name=${p:t}; ext=${(L)name##*.}
+    [[ "$name" == *.* && "$SKIP" == *" $ext "* ]] && continue
+    [[ "$name" == 파일정리* || "$name" == "~$"* ]] && continue
+    f=$(find_folder "$name") || { none=$((none+1)); continue; }
+    P+=("$p"); W+=("$label"); F+=("$f")
+  done
+done
+
+echo ""
+echo "보낼 곳: $DEST"
+if (( ${#P} == 0 )); then echo "옮길 파일이 없어요. (규칙에 안 맞아 그대로 두는 파일 ${none}개)"; exit 0; fi
+for i in {1..${#P}}; do printf "%3d. [%s] %s  →  %s\n" $i "${W[$i]}" "${P[$i]:t}" "${F[$i]}"; done
+echo ""
+echo "옮길 파일 ${#P}개 · 규칙에 안 맞아 그대로 두는 파일 ${none}개"
+echo "빼고 싶은 번호가 있으면 띄어 적어 주세요 (예: 3 7). 다 옮기려면 그냥 엔터, 그만두려면 n"
+read "ans?> "
+[[ "$ans" == [nN]* ]] && { echo "그만뒀어요."; exit 0; }
+typeset -A skip
+for x in ${=ans}; do skip[$x]=1; done
+
+: > "$UNDO.new"
+moved=0; fails=""
+stamp=$(date "+%Y-%m-%d %H:%M")
+for i in {1..${#P}}; do
+  [[ -n "${skip[$i]}" ]] && continue
+  d="$DEST/${F[$i]}"; mkdir -p "$d"
+  t=$(unique "$d" "${P[$i]:t}")
+  if mv -n -- "${P[$i]}" "$t"; then
+    moved=$((moved+1)); printf "%s\t%s\n" "${P[$i]}" "$t" >> "$UNDO.new"
+    printf "%s\t%s\t→\t%s\n" "$stamp" "${P[$i]}" "$t" >> "$LOGF"
+  else fails+="  · ${P[$i]:t}\n"; fi
+done
+(( moved > 0 )) && mv -f "$UNDO.new" "$UNDO" || rm -f "$UNDO.new"
+echo "${moved}개 옮겼어요."
+[[ -n "$fails" ]] && printf "못 옮긴 파일:\n$fails"
+echo "잘못 옮겼으면:  zsh ~/Downloads/파일정리.sh 되돌리기"
+</script>
+<script src="rules.js"></script>
+<script>
+var LS = "fileSortRules_v1";
+var rules;
+try { rules = JSON.parse(localStorage.getItem(LS)); } catch (e) {}
+if (!Array.isArray(rules) || !rules.length) rules = JSON.parse(JSON.stringify(DEFAULT_RULES));
+var dropped = [];
+
+function save() { try { localStorage.setItem(LS, JSON.stringify(rules)); } catch (e) {} renderResult(); }
+function toast(t) { var el = document.getElementById("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(function () { el.style.display = "none"; }, 1800); }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function clean(s) { return String(s).replace(/["`|\\\/:*?<>\r\n\t]/g, "").trim(); }
+function splitKeys(s) { return String(s).split(/[,，]/).map(clean).filter(Boolean); }
+
+function renderRules() {
+  var tb = document.getElementById("rules"); tb.innerHTML = "";
+  rules.forEach(function (r, i) {
+    var tr = document.createElement("tr");
+    tr.innerHTML = '<td class="ord"><button data-up="' + i + '">▲</button> <button data-dn="' + i + '">▼</button></td>' +
+      '<td class="f"><input data-f="' + i + '" value="' + esc(r.folder) + '"></td>' +
+      '<td><input data-k="' + i + '" value="' + esc(r.keys.join(", ")) + '"></td>' +
+      '<td><button class="btn w s" data-del="' + i + '">빼기</button></td>';
+    tb.appendChild(tr);
+  });
+}
+document.getElementById("rules").addEventListener("change", function (e) {
+  var t = e.target;
+  if (t.dataset.f != null) { rules[+t.dataset.f].folder = clean(t.value) || "새 폴더"; }
+  if (t.dataset.k != null) { rules[+t.dataset.k].keys = splitKeys(t.value); }
+  save(); renderRules();
+});
+document.getElementById("rules").addEventListener("click", function (e) {
+  var t = e.target, i;
+  if (t.dataset.up != null) { i = +t.dataset.up; if (i > 0) { var a = rules[i - 1]; rules[i - 1] = rules[i]; rules[i] = a; } }
+  else if (t.dataset.dn != null) { i = +t.dataset.dn; if (i < rules.length - 1) { var b = rules[i + 1]; rules[i + 1] = rules[i]; rules[i] = b; } }
+  else if (t.dataset.del != null) { if (!confirm("「" + rules[+t.dataset.del].folder + "」 규칙을 뺄까요?")) return; rules.splice(+t.dataset.del, 1); }
+  else return;
+  save(); renderRules();
+});
+document.getElementById("addRule").onclick = function () { rules.push({ folder: "새 폴더", keys: [] }); save(); renderRules(); };
+document.getElementById("resetRule").onclick = function () { if (!confirm("규칙을 처음 기본값으로 되돌릴까요?")) return; rules = JSON.parse(JSON.stringify(DEFAULT_RULES)); save(); renderRules(); toast("기본값으로 되돌렸어요"); };
+
+// ── 미리보기 ──
+var drop = document.getElementById("drop"), pick = document.getElementById("pick");
+drop.onclick = function () { pick.click(); };
+pick.onchange = function () { setFiles(pick.files); pick.value = ""; };
+["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("on"); }); });
+["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("on"); }); });
+drop.addEventListener("drop", function (e) { setFiles(e.dataTransfer.files); });
+function setFiles(fl) {
+  dropped = [];
+  for (var i = 0; i < fl.length; i++) { var n = fl[i].name; if (n.normalize) n = n.normalize("NFC"); dropped.push(n); }
+  renderResult();
+}
+function renderResult() {
+  var box = document.getElementById("result");
+  if (!dropped.length) { box.innerHTML = ""; return; }
+  var g = {}, order = [], none = [];
+  dropped.forEach(function (n) {
+    var m = findFolder(n, rules);
+    if (!m) { none.push(n); return; }
+    if (!g[m.folder]) { g[m.folder] = []; order.push(m.folder); }
+    g[m.folder].push({ n: n, k: m.key });
+  });
+  var moved = dropped.length - none.length;
+  var h = '<p style="margin:12px 2px 0;font-weight:800">' + dropped.length + '개 중 <span style="color:#16704b">' + moved + '개 옮겨짐</span>' + (none.length ? ' · <span style="color:#9a4b00">' + none.length + '개 그대로 둠</span>' : '') + '</p><div class="groups">';
+  rules.forEach(function (r) {
+    if (!g[r.folder]) return;
+    h += '<div class="grp"><span class="c">' + g[r.folder].length + '</span><b>📁 ' + esc(r.folder) + '</b><ul>';
+    g[r.folder].forEach(function (x) { h += '<li>' + esc(x.n) + ' <i>(' + esc(x.k) + ')</i></li>'; });
+    h += '</ul></div>';
+    delete g[r.folder];
+  });
+  if (none.length) {
+    var opts = rules.map(function (r, i) { return '<option value="' + i + '">' + esc(r.folder) + '</option>'; }).join("");
+    h += '<div class="grp none"><span class="c">' + none.length + '</span><b>그대로 둠 (맞는 규칙 없음)</b><ul>';
+    none.forEach(function (n, j) {
+      var guess = n.replace(/\.[^.]+$/, "").replace(/\(.*?\)|\d{4}년|\d+[.\-]\d+[.\-]?\d*\.?|\d+차|제\d+차/g, " ").trim().split(/\s+/)[0] || "";
+      h += '<li>' + esc(n) + '<div class="fix"><input id="kw' + j + '" value="' + esc(guess) + '" title="이 말이 들어 있으면"><select id="fd' + j + '">' + opts + '</select><button class="btn w s" data-add="' + j + '">규칙에 넣기</button></div></li>';
+    });
+    h += '</ul></div>';
+  }
+  box.innerHTML = h + '</div>';
+}
+document.getElementById("result").addEventListener("click", function (e) {
+  var j = e.target.dataset.add; if (j == null) return;
+  var kw = clean(document.getElementById("kw" + j).value), fi = +document.getElementById("fd" + j).value;
+  if (!kw) { toast("들어 있는 말을 적어 주세요"); return; }
+  if (rules[fi].keys.indexOf(kw) < 0) rules[fi].keys.push(kw);
+  save(); renderRules(); toast("「" + rules[fi].folder + "」에 '" + kw + "' 넣었어요");
+});
+
+// ── 프로그램 만들기 ──
+function q(s) { return '"' + String(s).replace(/"/g, "") + '"'; }
+function makeAhk() {
+  var rl = rules.filter(function (r) { return r.folder && r.keys.length; }).map(function (r) {
+    return '  [' + q(r.folder) + ', [' + r.keys.map(q).join(", ") + ']]';
+  }).join(",\n");
+  return AHK.replace("%%RULES%%", rl).replace("%%DATE%%", new Date().toLocaleString("ko-KR"));
+}
+function makeSh() {
+  var rl = rules.filter(function (r) { return r.folder && r.keys.length; }).map(function (r) {
+    return "  '" + (r.folder + "|" + r.keys.join(",")).replace(/'/g, "") + "'";
+  }).join("\n");
+  return SH.replace("%%RULES%%", rl).replace("%%DATE%%", new Date().toLocaleString("ko-KR"));
+}
+function download(name, text, crlf) {
+  if (crlf) text = text.replace(/\r?\n/g, "\r\n");
+  var blob = new Blob([crlf ? "﻿" + text : text], { type: "text/plain;charset=utf-8" });
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+document.getElementById("getWin").onclick = function () { download("파일정리.ahk", makeAhk(), true); toast("파일정리.ahk 받았어요"); };
+document.getElementById("getMac").onclick = function () { download("파일정리.sh", makeSh(), false); toast("파일정리.sh 받았어요"); };
+
+var AHK = document.getElementById("tplAhk").textContent.replace(/^\n/, "");
+var SH = document.getElementById("tplSh").textContent.replace(/^\n/, "");
+
+renderRules();
+</script>
+</body>
+</html>
