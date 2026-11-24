@@ -151,13 +151,13 @@ textarea{font:inherit;font-size:14px;width:100%;padding:8px;border:2px solid var
 <!-- ① 오늘 -->
 <div class="tab" data-tab="today">
  <div class="grid2">
-  <section class="card"><h2 id="todayTitle">오늘</h2><div id="callnow"></div><div class="now" id="now"></div><div id="todayDay"></div></section>
+  <section class="card"><h2 id="todayTitle">오늘</h2><div id="callnow"></div><div class="now" id="now"></div><div id="todayDay" style="display:none"></div></section>
   <section class="card"><h2>⚠ 근무 인원 주의</h2><div class="hint" id="alHint" style="margin:-6px 0 8px"></div><div class="alerts" id="alerts"></div></section>
  </div>
 </div>
 
 <!-- ② 달력 -->
-<div class="tab" data-tab="cal">
+<div class="tab" data-tab="today">
  <section class="card"><div class="mhead"><button class="nav" id="prevM">◀</button><h2 id="mTitle"></h2><button class="nav" id="nextM">▶</button></div>
  <div class="cal" id="cal"></div>
  <div class="legend">칸 색: <i class="lo"></i>인원 부족(혼자 등) <i class="lz"></i>아무도 없음 · 이름 = 그날 자리 비우는 사람</div>
@@ -168,13 +168,8 @@ textarea{font:inherit;font-size:14px;width:100%;padding:8px;border:2px solid var
 
 <!-- ③ 일정 넣기 -->
 <div class="tab" data-tab="add">
- <div class="seg2"><button type="button" class="chip on" data-sub="paste">📋 쪽지로 넣기</button><button type="button" class="chip" data-sub="form">✏ 직접 넣기</button></div>
- <section class="card sub" data-subp="paste"><h2>쪽지 붙여넣어 한 번에 넣기</h2>
- <textarea id="pasteTxt" rows="5" placeholder="평소 쪽지 그대로 붙여넣으세요. 예)&#10;은우 24일 연가&#10;가인 11/26~28 교육&#10;지숙 25일 14시~16시 외출, 27일 오후반차&#10;팀장님 다음주 월요일 출장"></textarea>
- <button class="save" id="parseBtn" style="width:100%;margin-top:8px">읽어서 미리보기</button>
- <div id="pasteOut"></div></section>
-
- <section class="card sub" data-subp="form" id="formCard" style="display:none"><h2>일정 넣기</h2>
+ <div class="seg2"><button type="button" class="chip on" data-sub="form">✏ 직접 넣기</button><button type="button" class="chip" data-sub="paste">📋 쪽지로 넣기</button></div>
+ <section class="card sub" data-subp="form" id="formCard"><h2>일정 넣기</h2>
  <div class="form">
   <div class="row"><label>이름</label><div id="fWho" class="row"></div></div>
   <div class="row"><label>날짜</label><span id="rangeBox" class="row"><input type="date" id="fFrom"> ~ <input type="date" id="fTo"><span class="hint">하루면 뒤 칸 비움</span></span><button type="button" class="chip" id="multiBtn">📅 여러 날 골라 넣기</button></div>
@@ -194,6 +189,11 @@ textarea{font:inherit;font-size:14px;width:100%;padding:8px;border:2px solid var
   </div>
   <button type="button" class="more" id="cancelEdit" style="display:none" onclick="endEdit()">수정 취소</button>
  </div></section>
+
+ <section class="card sub" data-subp="paste" style="display:none"><h2>쪽지 붙여넣어 한 번에 넣기</h2>
+ <textarea id="pasteTxt" rows="5" placeholder="평소 쪽지 그대로 붙여넣으세요. 예)&#10;은우 24일 연가&#10;가인 11/26~28 교육&#10;지숙 25일 14시~16시 외출, 27일 오후반차&#10;팀장님 다음주 월요일 출장"></textarea>
+ <button class="save" id="parseBtn" style="width:100%;margin-top:8px">읽어서 미리보기</button>
+ <div id="pasteOut"></div></section>
 </div>
 
 <!-- ④ 설정 -->
@@ -215,7 +215,7 @@ textarea{font:inherit;font-size:14px;width:100%;padding:8px;border:2px solid var
 </div>
 </div>
 </div>
-<nav class="tabbar" id="tabbar" style="display:none"><button data-go-tab="today">🏠<b>오늘</b></button><button data-go-tab="cal">📅<b>달력</b></button><button data-go-tab="add">✏<b>일정 넣기</b></button><button data-go-tab="set">⚙<b>설정</b></button></nav>
+<nav class="tabbar" id="tabbar" style="display:none"><button data-go-tab="today">📅<b>오늘·달력</b></button><button data-go-tab="add">✏<b>일정 넣기</b></button><button data-go-tab="set">⚙<b>설정</b></button></nav>
 
 <div class="pop" id="pop"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
@@ -441,7 +441,7 @@ document.addEventListener("click",e=>{
  const c=e.target.closest("[data-day]"); if(c){selDay=c.dataset.day; if(F.multi){togglePick(selDay)} else linkForm(selDay); render();return;}
  const ed=e.target.closest("[data-edit]"); if(ed){const it=DB.items.find(x=>x.id===ed.dataset.edit); if(it){startEdit(it,true); syncExisting();} return;}
  const nw=e.target.closest("[data-newitem]"); if(nw){endEdit(); $("fExist").innerHTML='<b>'+NM(F.who)+' · '+md(pickDay||$("fFrom").value)+'</b> — 새 일정 넣는 중'; return;}
- const g=e.target.closest("[data-go]"); if(g){selDay=g.dataset.go;linkForm(selDay);const d=parse(selDay);calY=d.getFullYear();calM=d.getMonth();render();goTab("cal");$("cal").scrollIntoView({behavior:"smooth",block:"start"});return;}
+ const g=e.target.closest("[data-go]"); if(g){selDay=g.dataset.go;linkForm(selDay);const d=parse(selDay);calY=d.getFullYear();calM=d.getMonth();render();goTab("today");$("cal").scrollIntoView({behavior:"smooth",block:"start"});return;}
  const x=e.target.closest("[data-del]"); if(x) return delItem(x.dataset.del);
  if(e.target.id==="pop") closePop();
 });
